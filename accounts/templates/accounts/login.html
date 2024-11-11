@@ -1,0 +1,71 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block title %}Login{% endblock title %}
+
+{% block content %}
+    <section class="container d-flex flex-column justify-content-center align-items-center vh-100">
+    <div class="row w-100 justify-content-center">
+        <div class="col-lg-5 col-md-8">
+            <!-- Card -->
+            <div class="card shadow p-3 mb-5 bg-body-rounded ">
+                <!-- Card Body -->
+                <div class="card-body bg-white border-1 rounded-5 p-5">
+                    <div>
+                        <h1 class="fs-4 mb-1">Iniciar Sesión</h1>
+                        <p class="text-muted">Ingresar RUN sin digito verificador ni -</p>
+                    </div>
+
+                    <!-- Muestra errores generales del formulario aquí -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <form id="loginForm" method="POST" class="needs-validation" autocomplete="on" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ field.errors|striptags }}
+                                    </div>
+                                    <script>
+                                        document.getElementById('{{ field.id_for_label }}').classList.add('is-invalid');
+                                    </script>
+                                {% else %}
+                                    <div class="valid-feedback">
+                                        Looks good!
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-lg-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <a class="small text-start" href="">Recupera tu contraseña</a>
+                            </div>
+                        </div>
+
+
+                        <button class="btn btn-primary w-100" id="submitButton" type="submit">
+                            <span class="spinner-border spinner-border-sm d-none" id="spinner" role="status" aria-hidden="true"></span>
+                            Iniciar sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </section>
+    
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'js/login/spinner.js' %}"></script>
+<script src="{% static 'js/login/rut.js' %}"></script>
+{% endblock script %}
