@@ -1,0 +1,330 @@
+{% extends "dashboarda/basedasha.html" %}
+{% load static %}
+
+{% block title %}Junta de Vecinos{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
+<link href="{% static 'django_select2/django_select2.css' %}" rel="stylesheet">
+{% endblock css %}
+
+{% block content %}
+
+    <!-- Modal para agregar Junta de Vecinos -->
+    <div class="modal fade mt-5" id="addJuntaVecinoModal" tabindex="-1" aria-labelledby="addJuntaVecinoModaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="addJuntaVecinoModalLabel">Crear junta de vecinos</h5>
+                </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            <div class="modal-body">
+                <p class="text-muted"><span class="text-danger">*</span> El asterisco indica que un campo es obligatorio.</p>
+                
+                <form method="post" id="juntaVecinosForm" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="create">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <!-- Nombre Organización -->
+                        <div class="col-md-6">
+                            <label for="{{ form.nombreOrganizacion.id_for_label }}">{{ form.nombreOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.nombreOrganizacion }}
+                        </div>
+
+                        <!-- Fecha Integración -->
+                        <div class="col-md-6">
+                            <label for="{{ form.fechaIntegracion.id_for_label }}">{{ form.fechaIntegracion.label }}<span class="text-danger">*</span></label>
+                            <div class="input-group date">
+                                {{ form.fechaIntegracion }}
+                                <span class="input-group-append">
+                                    <span class="input-group-text bg-light d-block">
+                                        <i class="ri-calendar-line"></i>
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Región de la Organización -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.regionOrganizacion.id_for_label }}">{{ form.regionOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.regionOrganizacion }}
+                        </div>
+                        <!-- Comuna de la Organización -->
+                        <div class="col-md-6">
+                            <label for="{{ form.comunaOrganizacion.id_for_label }}">{{ form.comunaOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.comunaOrganizacion }}
+                        </div>
+                    </div>
+                    <!-- Dirección de la Organización -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="{{ form.direccionOrganizacion.id_for_label }}">{{ form.direccionOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.direccionOrganizacion }}
+                        </div>
+                    </div>
+                    <!-- Perfiles asociados a la Organización -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="fw-bolder" for="{{ form.perfilesOrganizacion.id_for_label }}">{{ form.perfilesOrganizacion.label }}</label>
+                            <br>
+                            <span clas="text-muted">Mantenga presionado "Control" o "Comando" en una Mac, para seleccionar más de uno.</span>
+                            {{ form.perfilesOrganizacion }}
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Crear</button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--  Modal para editar Junta de Vecinos -->
+    <div class="modal fade mt-5" id="editJuntaVecinoModal" tabindex="-1" aria-labelledby="editJuntaVecinoModaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="editJuntaVecinoModalLabel">Editar junta de vecinos</h5>
+                </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            <div class="modal-body">
+                <p class="text-muted"><span class="text-danger">*</span> El asterisco indica que un campo es obligatorio.</p>
+                
+                <form method="post" id="editJuntaVecinosForm" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="junta_id" id="edit_junta_id">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <!-- Nombre Organización -->
+                        <div class="col-md-6">
+                            <label for="{{ form.nombreOrganizacion.id_for_label }}">{{ form.nombreOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.nombreOrganizacion }}
+                        </div>
+
+                        <!-- Fecha Integración -->
+                        <div class="col-md-6">
+                            <label for="{{ form.fechaIntegracion.id_for_label }}">{{ form.fechaIntegracion.label }}<span class="text-danger">*</span></label>
+                            <div class="input-group date">
+                                {{ form.fechaIntegracion }}
+                                <span class="input-group-append">
+                                    <span class="input-group-text bg-light d-block">
+                                        <i class="ri-calendar-line"></i>
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Región de la Organización -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.regionOrganizacion.id_for_label }}">{{ form.regionOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.regionOrganizacion }}
+                        </div>
+                        <!-- Comuna de la Organización -->
+                        <div class="col-md-6">
+                            <label for="{{ form.comunaOrganizacion.id_for_label }}">{{ form.comunaOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.comunaOrganizacion }}
+                        </div>
+                    </div>
+                    <!-- Dirección de la Organización -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="{{ form.direccionOrganizacion.id_for_label }}">{{ form.direccionOrganizacion.label }}<span class="text-danger">*</span></label>
+                            {{ form.direccionOrganizacion }}
+                        </div>
+                    </div>
+                    <!-- Perfiles asociados a la Organización -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="fw-bolder" for="{{ form.perfilesOrganizacion.id_for_label }}">{{ form.perfilesOrganizacion.label }}</label>
+                            <br>
+                            <span clas="text-muted">Mantenga presionado "Control" o "Comando" en una Mac, para seleccionar más de uno.</span>
+                            {{ form.perfilesOrganizacion }}
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Actualizar</button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">Junta de Vecinos</h2>
+        </div> 
+
+
+        <div class="mb-3">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJuntaVecinoModal"><i class="ri-add-box-fill"></i> Crear junta de vecinos</button>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row">
+
+    <div class="container">
+        <!-- Gráfico tendencia -->
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h4 class="card-title text-black d-flex align-items-center">
+                        <span class="text-black mb-2">Lista de Junta de Vecinos</span>
+                    </h4>
+                    <div class="table-responsive">
+                        <table id="logsTableJuntaVecinos" class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Organizacion</th>
+                                    <th scope="col">Region</th>
+                                    <th scope="col">Comuna</th>
+                                    <th scope="col">Fecha Integración</th>
+                                    <th scope="col">Fecha Término</th>
+                                    <th scope="col">Direccion</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for junta in juntas %}
+                                <tr>
+                                    <td>{{junta.id_juntavecino}}</td>
+                                    <td>{{junta.nombre_organizacion}}</td>
+                                    <td>{{junta.id_comuna.id_region.nombre_region}}</td>
+                                    <td>{{junta.id_comuna}}</td>   
+                                    <td>{{junta.fecha_integracion}}</td>   
+                                    <td>
+                                        {% if junta.fecha_termino %}
+                                            <span class="badge text-bg-danger">{{junta.fecha_termino}}</span>
+                                        {% else %}
+                                            <span class="badge text-bg-info">--</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{junta.direccion}}</td> 
+                                    <td>
+                                        {% if junta.id_estado_id == 1 %}
+                                            <span class="badge text-bg-success">habilitada</span>
+                                        {% else %}
+                                            <span class="badge text-bg-danger">inhabilitada</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item edit-junta" href="#" 
+                                                    data-id="{{ junta.id_juntavecino }}"
+                                                    data-nombre="{{ junta.nombre_organizacion }}"
+                                                    data-region="{{ junta.id_comuna.id_region.id_region }}"
+                                                    data-comuna="{{ junta.id_comuna }}"
+                                                    data-fecha="{{ junta.fecha_integracion|date:'Y-m-d' }}"
+                                                    data-direccion="{{ junta.direccion }}"
+                                                    data-perfiles="{{ junta.perfiles.all|join:',' }}"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editJuntaVecinoModal"><i class="ri-edit-2-line"></i> Editar Junta</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="ri-admin-line"></i> Perfiles asociados</a></li>
+                                            </ul>
+                                        </div>
+                                    
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboarda/js/tables.js' %}"></script>
+<script src="{% static 'dashboarda/js/comunasGet.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        // Datepicker initialization
+        $('.input-group.date').datepicker({
+            format: 'yyyy-mm-dd',
+            language: 'es',
+            autoclose: true,
+            todayHighlight: true
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejar clic en editar
+        document.querySelectorAll('.edit-junta').forEach(function(element) {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Obtener datos del elemento
+                const juntaId = this.dataset.id;
+                const nombre = this.dataset.nombre;
+                const region = this.dataset.region;
+                const comuna = this.dataset.comuna;
+                const fecha = this.dataset.fecha;
+                const direccion = this.dataset.direccion;
+                const perfiles = this.dataset.perfiles;
+    
+                // Llenar el formulario de edición
+                document.getElementById('edit_junta_id').value = juntaId;
+                document.querySelector('#editJuntaVecinoModal #nombreOrganizacion').value = nombre;
+                document.querySelector('#editJuntaVecinoModal #fechaIntegracion').value = fecha;
+                document.querySelector('#editJuntaVecinoModal #direccionOrganizacion').value = direccion;
+    
+                // Manejar región y comuna
+                const regionSelect = document.querySelector('#editJuntaVecinoModal #region');
+                regionSelect.value = region;
+                
+                // Trigger change event para cargar comunas
+                regionSelect.dispatchEvent(new Event('change'));
+    
+                // Establecer comuna después de que se carguen las opciones
+                setTimeout(() => {
+                    document.querySelector('#editJuntaVecinoModal #comuna').value = comuna;
+                    // Trigger change para cargar perfiles
+                    document.querySelector('#editJuntaVecinoModal #comuna').dispatchEvent(new Event('change'));
+                    
+                    // Establecer perfiles seleccionados
+                    if (perfiles) {
+                        const perfilesArray = perfiles.split(',');
+                        const perfilesSelect = document.querySelector('#editJuntaVecinoModal #perfilesOrganizacion');
+                        perfilesArray.forEach(perfil => {
+                            Array.from(perfilesSelect.options).forEach(option => {
+                                if (option.value === perfil.trim()) {
+                                    option.selected = true;
+                                }
+                            });
+                        });
+                    }
+                }, 500);
+            });
+        });
+    });
+</script>
+{% endblock script %}
