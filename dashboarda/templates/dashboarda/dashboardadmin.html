@@ -1,0 +1,93 @@
+{% extends "dashboarda/basedasha.html" %}
+{% load static %}
+
+{% block title %}Administrador{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">Buenos días, <span class="text-black">{{request.user.nombre}} {{request.user.apellido}}</span></h2>
+            <p class="text-muted">Realiza seguimiento a las Juntas de Vecinos</p>
+        </div> 
+
+        <div class="row">
+            <!-- Total Junta de Vecinos -->
+            <div class="col-md-4">
+                <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                    <div class="card-body py-4 my-1">
+                        <h3 class="card-title text-black d-flex align-items-center">
+                            <span class="text-black d-flex align-items-center justify-content-center">
+                                <i class="ri-draft-line"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2">{{total_juntas}}</span>
+                        </h3>
+                        <span class="text-black">Total Junta Vecinos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Junta de Vecinos -->
+            <div class="col-md-4">
+                <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                    <div class="card-body py-4 my-1">
+                        <h3 class="card-title text-black d-flex align-items-center">
+                            <span class="text-black d-flex align-items-center justify-content-center">
+                                <i class="ri-draft-line"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2">{{habilitadas_juntas}}</span>
+                        </h3>
+                        <span class="text-black">Total Junta Vecinos <span class="badge text-bg-success">habilitadas</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Junta de Vecinos -->
+            <div class="col-md-4">
+                <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                    <div class="card-body py-4 my-1">
+                        <h3 class="card-title text-black d-flex align-items-center">
+                            <span class="text-black d-flex align-items-center justify-content-center">
+                                <i class="ri-draft-line"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2">{{inhabilitadas_juntas}}</span>
+                        </h3>
+                        <span class="text-black">Total Junta Vecinos <span class="badge text-bg-danger">inhabilitadas</span></span>
+                        
+                    </div>
+                </div>
+            </div>
+        </div> <!-- Close first row -->
+    </div>
+
+    <div class="container">
+        <!-- Gráfico tendencia -->
+        <div class="row">
+            <div class="col-12 col-md-6">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                <h4 class="card-title text-black d-flex align-items-center">
+                    <span class="text-black ms-1">Gráfico</span>
+                </h4>
+                </div>
+            </div>
+            </div>
+            <div class="col-12 col-md-6">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                <h4 class="card-title text-black d-flex align-items-center">
+                    <span class="text-black ms-1">Gráfico</span>
+                </h4>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboarda/js/tables.js' %}"></script>
+{% endblock script %}

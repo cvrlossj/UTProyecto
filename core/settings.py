@@ -20,11 +20,15 @@ AUTH_USER_MODEL = 'accounts.Perfiles'
 # Application definition
 
 INSTALLED_APPS = [
+    # Apps de terceros
+    'django_select2',
+    
     # Mis Apps
     'accounts',
     'dashboarda',
     'dashboardv',
     'dashboardjv',
+    
     # Apps de Django
     'django.contrib.admin',
     'django.contrib.auth',
@@ -57,6 +61,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Mis propios contextos
+                'core.context_processors.app_name',
             ],
         },
     },
@@ -117,3 +123,14 @@ STATIC_ROOT = 'staticfiles'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+SESSION_COOKIE_AGE = 60 * 72  # 3 days
+SESSION_SAVE_EVERY_REQUEST = True
+
+LOGIN_URL = "/accounts/login/"
+
+# Django Select2 Configuration
+SELECT2_CACHE_BACKEND = 'default'
+SELECT2_JS = ''
+SELECT2_CSS = ''
