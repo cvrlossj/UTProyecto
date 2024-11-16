@@ -6,4 +6,6 @@ urlpatterns = [
     
     # Accounts View's
     path('accounts/', include('accounts.urls')),
+    # Dashboard Admin
+    path('superadmin/', include('dashboarda.urls'))
 ]
