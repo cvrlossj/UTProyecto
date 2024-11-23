@@ -1,0 +1,102 @@
+{% extends "dashboarda/basedasha.html" %}
+{% load static %}
+
+{% block title %}Crear una Junta Vecino{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="col-md-9">
+                {% if messages %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <div class="mb-2">
+                        <h2 class="text-muted mb-3">Crear una Junta de Vecino</h2>
+                    </div> 
+                
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <!-- Nombre Organización -->
+                            <div class="col-md-3">
+                                <label for="nombreOrganizacion">Nombre organización<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombreOrganizacion" id="nombreOrganizacion" placeholder="Nombre de la organización" required>
+                            </div>
+                            <!-- Fecha Integración -->
+                            <div class="col-md-2">
+                                <label for="fechaIntegracion">Fecha integración<span class="text-danger">*</span></label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fechaIntegracion" id="fechaIntegracion" placeholder="yyyy/mm/dd" required>
+                                </div>
+                            </div>
+                            <!-- Región -->
+                            <div class="col-md-3">
+                                <label for="region">Región<span class="text-danger">*</span></label>
+                                <select class="form-control" name="region" id="region" required onchange="loadComunas()" load>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for region in regiones %}
+                                        <option value="{{ region.id_region }}">{{ region.nombre_region }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Comuna -->
+                            <div class="col-md-3">
+                                <label for="comuna">Comuna<span class="text-danger">*</span></label>
+                                <select class="form-control" name="comuna" id="comuna" required disabled>
+                                    <option value="">Seleccione una opción</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                        
+                            <!-- Dirección Organizacion -->
+                            <div class="col-md-12">
+                                <label for="direccionOrganizacion">Dirección organización<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccionOrganizacion" id="direccionOrganizacion" placeholder="Ingresar la dirección de la junta de vecino" required>
+                            </div>
+                        </div>
+
+                        <!-- Perfiles asociados a la Organización -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="perfilesOrganizacion">Perfiles asociados a la Organización</label>
+                                <br>
+                                <span class="text-muted">Mantenga presionado "Control" o "Comando" en una Mac, para seleccionar más de uno.</span>
+                                <select class="form-control" name="perfilesOrganizacion" id="perfilesOrganizacion" multiple disabled>
+                                    <option value="">Seleccione primero una comuna</option>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboarda:juntavecinos" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Crear Junta</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboarda/js/comunasGet.js' %}"></script>
+<script>
+    flatpickr("#fechaIntegracion", {
+        minDate: "today",
+        locale: "es",
+    });
+</script>
+{% endblock script %}

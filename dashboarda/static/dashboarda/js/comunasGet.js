@@ -75,4 +75,59 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Por favor seleccione una comuna');
         }
     });
+    
+    // Function to load comunas for edit form
+    function loadComunasForEdit(regionId, comunaId) {
+        fetch(`/superadmin/load-comunas/?region_id=${regionId}`)
+            .then(response => response.json())
+            .then(data => {
+                const comunaSelect = document.getElementById('edit_comuna');
+                comunaSelect.innerHTML = '<option value="">Selecciona una comuna</option>';
+                data.forEach(comuna => {
+                    const option = document.createElement('option');
+                    option.value = comuna.id;
+                    option.textContent = comuna.nombre;
+                    if (comuna.id == comunaId) {
+                        option.selected = true;
+                    }
+                    comunaSelect.appendChild(option);
+                });
+                comunaSelect.removeAttribute('disabled');
+            })
+            .catch(error => console.error('Error al cargar comunas:', error));
+    }
+
+    // Function to load perfiles for edit form
+    function loadPerfilesForEdit(comunaId, perfiles) {
+        fetch(`/superadmin/get_perfiles_by_comuna/${comunaId}/`)
+            .then(response => response.json())
+            .then(data => {
+                const perfilesSelect = document.getElementById('edit_perfilesOrganizacion');
+                perfilesSelect.innerHTML = '';
+                data.forEach(perfil => {
+                    const option = document.createElement('option');
+                    option.value = perfil.rut;
+                    option.textContent = `${perfil.nombre} ${perfil.apellido}`;
+                    if (perfiles.includes(perfil.rut)) {
+                        option.selected = true;
+                    }
+                    perfilesSelect.appendChild(option);
+                });
+                perfilesSelect.removeAttribute('disabled');
+            })
+            .catch(error => console.error('Error al cargar perfiles:', error));
+    }
+
+    // Event listener for edit buttons
+    document.querySelectorAll('.edit-junta').forEach(button => {
+        button.addEventListener('click', function() {
+            // ...existing code...
+            const comunaId = this.getAttribute('data-comuna');
+            const perfiles = this.getAttribute('data-perfiles').split(',');
+
+            loadComunasForEdit(region, comunaId);
+            loadPerfilesForEdit(comunaId, perfiles);
+            // ...existing code...
+        });
+    });
 });

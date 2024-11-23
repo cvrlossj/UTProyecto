@@ -30,4 +30,6 @@ function initDataTable(tableId) {
 
 $(document).ready(function() {
     initDataTable('logsTableJuntaVecinos');
+    initDataTable('logsTablePerfilesJunta'); 
+    initDataTable('logsTablePerfiles'); 
 });

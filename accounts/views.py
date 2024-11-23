@@ -16,7 +16,7 @@ class CustomLoginView(LoginView):
         if user.id_rol.descripcion == "Administrador":
             return reverse('dashboarda:superadmin') 
         elif user.id_rol.descripcion == "Junta Vecinos":
-            pass
+            return reverse('dashboardjv:juntavecinos')
         elif user.id_rol.descripcion == "Vecino":
             pass
         

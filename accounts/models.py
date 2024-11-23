@@ -5,18 +5,29 @@ from django.utils.translation import gettext_lazy as _
 
 
 class PerfilesManager(BaseUserManager):
-    def create_user(self, rut, correo_electronico, password=None, **extra_fields):
+    def create_user(
+        self, rut, 
+        correo_electronico, 
+        password= str, 
+        **extra_fields: dict[str, str | bool],
+      ) -> "Perfiles":
         if not rut:
             raise ValueError("The RUT must be set")
         if not correo_electronico:
             raise ValueError("The Email must be set")
         correo_electronico = self.normalize_email(correo_electronico)
-        user = self.model(rut=rut, correo_electronico=correo_electronico, **extra_fields)
+        user: Perfiles = self.model(rut=rut, correo_electronico=correo_electronico, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, rut, correo_electronico, password=None, **extra_fields):
+    def create_superuser(
+          self, 
+          rut, 
+          correo_electronico, 
+          password=str, 
+          **extra_fields: dict[str, str | bool],
+      ) -> "Perfiles":
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -110,13 +121,13 @@ class Perfiles(AbstractUser):
   id_sexo = models.ForeignKey(Sexo, on_delete=models.CASCADE, null=True, blank=True)
   id_parentesco = models.ForeignKey(Parentesco, on_delete=models.CASCADE, null=True, blank=True)
   direccion = models.CharField(max_length=100, blank=True)
-  numero_contacto = models.IntegerField(null=True, blank=True)
+  numero_contacto = models.CharField(max_length=11)
   correo_electronico = models.CharField(max_length=80, blank=True)
   fecha_incorporacion = models.DateField(null=True, blank=True)
   fecha_termino = models.DateField(null=True, blank=True)
   id_rol = models.ForeignKey(Roles, on_delete=models.CASCADE, null=True, blank=True)
   id_comuna = models.ForeignKey(Comuna, on_delete=models.CASCADE, null=True, blank=True)
-  id_estadoperfil = models.ForeignKey(EstadoPerfil, on_delete=models.CASCADE, null=True, blank=True)
+  id_estadoperfil = models.ForeignKey(EstadoPerfil, on_delete=models.CASCADE, null=True, blank=True, default=1)
   
 
   USERNAME_FIELD = 'rut'

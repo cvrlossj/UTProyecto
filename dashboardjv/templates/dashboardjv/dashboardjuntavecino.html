@@ -1,11 +1,10 @@
-{% extends "dashboarda/basedasha.html" %}
+{% extends "dashboardjv/basedashjv.html" %}
 {% load static %}
 
-{% block title %}Administrador{% endblock title %}
+{% block title %}sd{% endblock title %}
 
 {% block content %}
-    {% csrf_token %}  <!-- Agregar el token CSRF aquí -->
-    
+    {% csrf_token %}
     <div class="container">
         <div class="mb-2">
             <h2 class="text-muted">Buenos días, <span class="text-black">{{request.user.nombre}} {{request.user.apellido}}</span></h2>
@@ -37,12 +36,6 @@
                             </span>
                             <span class="text-black fw-bolder ms-2" id="total_juntas_count">{{total_juntas}}</span>
                         </h3>
-                        <div id="loading-total" class="d-none align-items-center mt-2">
-                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <small class="text-muted">Actualizando...</small>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -71,12 +64,6 @@
                             </span>
                             <span class="text-black fw-bolder ms-2" id="habilitadas_juntas_count">{{habilitadas_juntas}}</span>
                         </h3>
-                        <div id="loading-habilitadas" class="d-none align-items-center mt-2">
-                            <div class="spinner-border spinner-border-sm text-success me-2" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <small class="text-muted">Actualizando...</small>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -105,12 +92,6 @@
                             </span>
                             <span class="text-black fw-bolder ms-2" id="inhabilitadas_juntas_count">{{inhabilitadas_juntas}}</span>
                         </h3>
-                        <div id="loading-inhabilitadas" class="d-none align-items-center mt-2">
-                            <div class="spinner-border spinner-border-sm text-danger me-2" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <small class="text-muted">Actualizando...</small>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -124,7 +105,6 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-4 my-1">
                         <span class="text-black fs-5 ms-4">Comparación de Juntas de Vecinos Integradas vs. Inhabilitadas</span>
-                        <canvas id="juntasChart" width="600" height="200"></canvas>
                     </div>
                 </div>
             </div>
@@ -133,7 +113,6 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-4 my-1">
                         <span class="text-black fs-5 ms-4">Cantidad de Juntas de Vecinos por Región</span>
-                        <canvas id="juntasRegionChart" width="200" height="50"></canvas>
                     </div>
                 </div>
             </div>
@@ -141,66 +120,3 @@
     </div>
 {% endblock content %}
 
-{% block script %}
-<script src="{% static 'dashboarda/js/tables.js' %}"></script>
-<script src="{% static 'dashboarda/js/filterdashboard.js' %}"></script>
-<script src="{% static 'dashboarda/js/graficoComparativa.js' %}"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const ctxRegion = document.getElementById('juntasRegionChart').getContext('2d');
-    
-        fetch('/superadmin/dashboard/juntas_por_region_chart_data/')
-            .then(response => response.json())
-            .then(data => {
-                const { labels, data: regionData } = data;
-    
-                new Chart(ctxRegion, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Juntas por Región',
-                            data: regionData,
-                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            },
-                        },
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Región'
-                                },
-                                grid: {
-                                    display: false
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Cantidad'
-                                },
-                                beginAtZero: true
-                                
-                            }
-                        }
-                    }
-                });
-            })
-            .catch(error => console.error('Error fetching chart data:', error));
-    });
-    
-</script>
-{% endblock script %}

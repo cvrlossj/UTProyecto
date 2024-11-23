@@ -1,0 +1,111 @@
+{% extends "dashboarda/basedasha.html" %}
+{% load static %}
+
+{% block title %}Editar Junta Vecino{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="col-md-9">
+                {% if messages %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <div class="mb-2">
+                        <h2 class="text-muted mb-3">Editando Junta {{ junta_vecinos.nombre_organizacion }}</h2>
+                    </div> 
+                
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <!-- Nombre Organización -->
+                            <div class="col-md-3">
+                                <label for="nombreOrganizacion">Nombre Organización<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombreOrganizacion" id="nombreOrganizacion" value="{{ junta_vecinos.nombre_organizacion }}" placeholder="Nombre de la organización" required>
+                            </div>
+                            <!-- Fecha Integración -->
+                            <div class="col-md-2">
+                                <label for="fechaIntegracion">Fecha integración<span class="text-danger">*</span></label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fechaIntegracion" id="fechaIntegracion" value="{{ junta_vecinos.fecha_integracion|date:'Y-m-d' }}" placeholder="yyyy/mm/dd" required>
+                                </div>
+                            </div>
+                            <!-- Región -->
+                            <div class="col-md-3">
+                                <label for="region">Región<span class="text-danger">*</span></label>
+                                <select class="form-control" name="region" id="region" required>
+                                    {% for region in regiones %}
+                                        <option value="{{ region.id_region }}" {% if region.id_region == junta_vecinos.id_comuna.id_region.id_region %}selected{% endif %}>
+                                            {{ region.nombre_region }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Comuna -->
+                            <div class="col-md-3">
+                                <label for="comuna">Comuna<span class="text-danger">*</span></label>
+                                <select class="form-control" name="comuna" id="comuna" required>
+                                    {% for comuna in comunas %}
+                                        <option value="{{ comuna.id_comuna }}" {% if comuna == junta_vecinos.id_comuna %}selected{% endif %}>
+                                            {{ comuna.nombre_comuna }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                        
+                            <!-- Dirección Organizacion -->
+                            <div class="col-md-12">
+                                <label for="direccionOrganizacion">Dirección organización<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccionOrganizacion" id="direccionOrganizacion" value="{{ junta_vecinos.direccion }}"placeholder="Ingresar la dirección de la junta de vecino" required>
+                            </div>
+                        </div>
+
+                        <!-- Perfiles asociados a la Organización -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="perfilesOrganizacion">Perfiles asociados a la Organización</label>
+                                <br>
+                                <span class="text-muted">Mantenga presionado "Control" o "Comando" en una Mac, para seleccionar más de uno.</span>
+                                <select class="form-control" name="perfilesOrganizacion" id="perfilesOrganizacion" multiple>
+                                    {% for perfil in perfiles %}
+                                        <option value="{{ perfil.rut }}" {% if perfil in perfiles_asociados %}selected{% endif %}>
+                                            {{ perfil.nombre }} {{ perfil.apellido }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboarda:juntavecinos" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Editar Junta</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboarda/js/comunasGet.js' %}"></script>
+<script>
+    flatpickr("#fechaIntegracion", {
+        minDate: "today",
+        locale: "es",
+    });
+</script>
+{% endblock script %}

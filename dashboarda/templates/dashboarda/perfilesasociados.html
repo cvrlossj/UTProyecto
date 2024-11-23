@@ -1,0 +1,130 @@
+{% extends "dashboarda/basedasha.html" %}
+{% load static %}
+
+{% block title %}Perfiles Asociados{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">Perfiles Asociados</h2>
+            <p class="text-muted">Aquí encuentras perfiles asociados a una junta de vecinos</p>
+        </div> 
+
+        <div class="mb-2 d-flex justify-content-start gap-2">
+            <a class="btn btn-primary" href="{% url "dashboarda:crear_perfil" %}"><i class="ri-admin-line"></i> Crear un perfil</a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row">
+
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h4 class="card-title text-black d-flex align-items-center">
+                        <span class="text-black mb-2">Lista de Perfiles</span>
+                    </h4>
+                    <div class="table-responsive">
+                        <table id="logsTablePerfilesJunta" class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Rut</th>
+                                    <th scope="col">Dv</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Apellido</th>
+                                    <th scope="col">Contacto</th>
+                                    <th scope="col">Region</th>
+                                    <th scope="col">Comuna</th>
+                                    <th scope="col">Fec. Inc</th>
+                                    <th scope="col">Fec. Term</th>
+                                    <th scope="col">Organizacion</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for perfil in perfiles %}
+                                <tr>
+                                    <td>{{perfil.rut}}</td>
+                                    <td>{{perfil.dv}}</td>   
+                                    <td>{{perfil.nombre}}</td>   
+                                    <td>{{perfil.apellido}}</td>   
+                                    <td>{{perfil.numero_contacto}}</td>   
+                                    <td>{{perfil.id_comuna.id_region.nombre_region}}</td>
+                                    <td>{{perfil.id_comuna}}</td>
+                                    <td>{{perfil.fecha_incorporacion|date:"Y-m-d"}}</td>   
+                                    <td>
+                                        {% if perfil.fecha_termino %}
+                                            <span class="">{{perfil.fecha_termino|date:"Y-m-d"}}</span>
+                                        {% else %}
+                                            <span class=""></span>
+                                        {% endif %}
+                                    </td> 
+                                    <td>
+                                        {% if perfil.id_estadoperfil_id == 2 %}
+                                            <span class="badge text-bg-danger">No disponible</span>
+                                        {% else %}
+                                            {% for junta in perfil.juntavecinos_set.all %}
+                                                {{ junta.nombre_organizacion }}<br>
+                                            {% empty %}
+                                                <span class="badge text-bg-success">Sin asignar</span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if perfil.id_estadoperfil_id == 1 %}
+                                            <span class="badge text-bg-success">habilitado</span>
+                                        {% else %}
+                                            <span class="badge text-bg-danger">inhabilitado</span>
+                                        {% endif %}
+                                    </td>
+                                    {% comment %} <td>
+                                        {% if junta.fecha_termino %}
+                                            <span class="badge text-bg-danger">{{junta.fecha_termino}}</span>
+                                        {% else %}
+                                            <span class="badge text-bg-info">--</span>
+                                        {% endif %}
+                                    </td> {% endcomment %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Botón principal que despliega el dropdown -->
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            
+                                            <!-- Menú desplegable -->
+                                            <ul class="dropdown-menu">
+                                                <!-- Opción para editar -->
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url "dashboarda:editar_perfil_junta" perfil.rut %}">
+                                                        <i class="ri-edit-line"></i> Editar
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboarda/js/tables.js' %}"></script>
+{% endblock script %}

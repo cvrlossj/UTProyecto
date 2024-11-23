@@ -1,0 +1,118 @@
+{% extends "dashboarda/basedasha.html" %}
+{% load static %}
+
+{% block title %}Junta Vecinos Por Regiones{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
+{% endblock css %}
+
+    
+{% block content %}
+    <div>
+        <div class="mb-3">
+            <a class="btn btn-danger" href="{% url "dashboarda:juntavecinos" %}"><i class="ri-arrow-left-line"></i> Regresar</a>
+        </div>
+        <div class="row">
+            <!-- Card Habilitadas -->
+            <div class="col-md-4">
+                <div class="card mb-4 border-1 rounded-2">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-black">Total Junta Vecinos <span class="badge text-bg-success">habilitadas</span></span>
+                        </div>
+                        <h3 class="card-title text-black d-flex align-items-center mt-2">
+                            <span class="text-success d-flex align-items-center justify-content-center">
+                                <i class="ri-map-pin-2-fill"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2" id="activas">0</span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Inhabilitadas -->
+            <div class="col-md-4">
+                <div class="card mb-4 border-1 rounded-2">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-black">Total Junta Vecinos <span class="badge text-bg-danger">inhabilitadas</span></span>
+                        </div>
+                        <h3 class="card-title text-black d-flex align-items-center mt-2">
+                            <span class="text-danger d-flex align-items-center justify-content-center">
+                                <i class="ri-map-pin-2-fill"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2" id="inactivas">0</span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+    <div id="map" style="height: 620px; width: 400px%;"></div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+        const map = L.map('map').setView([-33.4489, -70.6693], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+    
+        const activasEl = document.getElementById('activas');
+        const inactivasEl = document.getElementById('inactivas');
+        let activas = 0;
+        let inactivas = 0;
+    
+        function obtenerIcono(estado) {
+            const iconUrl = estado === 1 
+                ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png'
+                : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png';
+            return new L.Icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+        }
+    
+        // Cargar los datos de las juntas de vecinos desde la API
+        fetch("{% url 'dashboarda:obtener_juntas_vecinos' %}")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(junta => {
+                    if (junta.latitud && junta.longitud) {
+                        // Obtener el ícono según el estado
+                        const icono = obtenerIcono(junta.estado_id);
+    
+                        // Agregar un marcador en el mapa con el ícono correspondiente
+                        L.marker([junta.latitud, junta.longitud], { icon: icono })
+                            .addTo(map)
+                            .bindPopup(`
+                                <b>${junta.nombre}</b><br>
+                                Dirección: ${junta.direccion}<br>
+                                Estado: ${junta.estado_id === 1 ? 'Activa' : 'Inhabilitada'}
+                            `);
+    
+                        // Contabilizar según el estado
+                        if (junta.estado_id === 1) {
+                            activas++;
+                        } else {
+                            inactivas++;
+                        }
+                    }
+                });
+    
+                // Actualizar los contadores en el HTML
+                activasEl.textContent = activas;
+                inactivasEl.textContent = inactivas;
+            })
+            .catch(error => console.error('Error al obtener los datos:', error));
+</script>
+
+{% endblock script %}

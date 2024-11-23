@@ -8,6 +8,25 @@ body {
     font-family: 'Barlow', sans-serif;
 }
 
+
+[id$="_juntas_count"] {
+    transition: opacity 0.3s ease;
+}
+
+.spinner-border {
+    margin-right: 0.5rem;
+}
+
 /* .card-start {
     border: 5px solid #faf3e2;
 } */
+
+#direccion-suggestions {
+    max-height: 200px;
+    overflow-y: auto;
+    cursor: pointer;
+}
+
+#direccion-suggestions .list-group-item {
+    cursor: pointer;
+}
