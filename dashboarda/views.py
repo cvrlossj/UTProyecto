@@ -429,7 +429,7 @@ class PerfilesJuntaVecino(View):
     def get(self, request, id_juntavecino, *args, **kwargs):
         junta = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
 
-        perfiles = junta.perfiles.all()
+        perfiles = junta.perfiles.filter(id_rol=2)
         
         perfiles_habilitados = perfiles.filter(id_estadoperfil=1).count()
         perfiles_inhabilitados = perfiles.filter(id_estadoperfil=2).count()
