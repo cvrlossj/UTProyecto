@@ -4,6 +4,7 @@ import json
 # Vistas Genericas
 from django.views.generic import TemplateView, View
 # Utilidades
+from .utils import role_required
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from datetime import datetime, timedelta
@@ -16,6 +17,7 @@ from .models import JuntaVecinos, EstadoJuntaVecinos
 from django.db.models import Q, Count, Prefetch
 # Mensajes
 from django.contrib import messages
+
 
 
 
@@ -122,7 +124,7 @@ class PerfilesVecinosView(View):
         return render(request, 'dashboarda/perfilesasociados.html', context)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class CrearPerfilVecinoView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -191,7 +193,7 @@ class CrearPerfilVecinoView(View):
         messages.success(request, 'Perfil creado exitosamente.')
         return redirect('dashboarda:perfiles')
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class EditarPerfilVecinoView(View):
     def get(self, request, *args, **kwargs):
         rut = kwargs.get('rut')
@@ -264,7 +266,7 @@ class EditarPerfilVecinoView(View):
         return redirect('dashboarda:perfiles')
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class CrearJuntaVecinosView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -336,7 +338,7 @@ class CrearJuntaVecinosView(View):
 
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class EditarJuntaVecinosView(View):
     def get(self, request, id_juntavecino, *args, **kwargs):
         junta_vecinos = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
@@ -409,7 +411,7 @@ class EditarJuntaVecinosView(View):
         
         
         
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class JuntaVecinosView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -422,7 +424,7 @@ class JuntaVecinosView(View):
         return render(request, 'dashboarda/listajuntavecinos.html', context)
     
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class PerfilesJuntaVecino(View):
     def get(self, request, id_juntavecino, *args, **kwargs):
         junta = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
@@ -514,7 +516,7 @@ def reset_data(request):
 
 
     
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class DashboardAdminView(TemplateView):
     template_name = 'dashboarda/dashboardadmin.html'
     
@@ -534,7 +536,7 @@ class DashboardAdminView(TemplateView):
         })
         return context
     
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class JuntaVecinosRegiones(TemplateView):
     template_name = 'dashboarda/regionesjuntas.html'
     

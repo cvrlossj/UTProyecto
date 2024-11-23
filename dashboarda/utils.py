@@ -1,3 +1,5 @@
+from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
 import requests
 
 def obtener_coordenadas(direccion, comuna, region):
@@ -33,3 +35,20 @@ def obtener_coordenadas(direccion, comuna, region):
         print(f"Error en la solicitud a Nominatim: {e}")
     
     return None, None
+
+
+
+def role_required(role_id):
+    """
+    Decorador para restringir vistas según el id_rol del usuario.
+    
+    :param role_id: ID del rol requerido para acceder a la vista.
+    """
+    def decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            if request.user.id_rol_id != role_id:
+                raise PermissionDenied  # Lanza un error 403
+            # Si pasa las validaciones, llama a la vista
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
