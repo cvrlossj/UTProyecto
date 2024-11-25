@@ -41,18 +41,21 @@ class PostulacionProyectos(models.Model):
   
 class CertificadosResi(models.Model):
   id_certificado = models.AutoField(unique=True, primary_key=True)
-  nombre_pstulante = models.CharField(max_length=120)
+  nombre_postulante = models.CharField(max_length=120)
   direccion_postulante = models.CharField(max_length=120)
   fecha_emision = models.DateField()
   id_juntavecino = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
   rut_postulante = models.ForeignKey(Perfiles, on_delete=models.CASCADE)
   id_estadocertificado = models.ForeignKey(EstadoCertificado, on_delete=models.CASCADE)
-  
 
 class Noticias(models.Model):
   id_noticia = models.AutoField(unique=True, primary_key=True)
   nombre = models.CharField(max_length=80)
   descripcion = models.TextField()
   fecha_inicio = models.DateField()
-  fecha_termino = models.DateField()
+  fecha_termino = models.DateField(null=True, blank=True)
   id_estadonoticia = models.ForeignKey(EstadoNoticia, on_delete=models.CASCADE)
+  id_juntavecinos = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
+  
+  def __str__(self):
+        return f"{self.nombre} ({self.fecha_inicio} - {self.fecha_termino})"
