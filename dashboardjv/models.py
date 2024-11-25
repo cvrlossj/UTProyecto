@@ -28,14 +28,15 @@ class Actividad(models.Model):
   horario_inicio = models.TimeField()
   horario_termino = models.TimeField()
   id_estadoactividad = models.ForeignKey(EstadoNoticia, on_delete=models.CASCADE)
-
+  id_juntavecinos = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
+  
 class PostulacionProyectos(models.Model):
   id_proyecto = models.AutoField(unique=True, primary_key=True)
   titulo = models.CharField(max_length=150)
   descripcion = models.TextField()
   objetivos = models.TextField()
   presupuesto = models.DecimalField(max_digits=15, decimal_places=2)
-  id_juntavecino = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
+  id_juntavecinos = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
   rut_postulante = models.ForeignKey(Perfiles, on_delete=models.CASCADE)
   id_estadopostulacion = models.ForeignKey(EstadoPostulacion, on_delete=models.CASCADE)
   
@@ -44,7 +45,7 @@ class CertificadosResi(models.Model):
   nombre_postulante = models.CharField(max_length=120)
   direccion_postulante = models.CharField(max_length=120)
   fecha_emision = models.DateField()
-  id_juntavecino = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
+  id_juntavecinos = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
   rut_postulante = models.ForeignKey(Perfiles, on_delete=models.CASCADE)
   id_estadocertificado = models.ForeignKey(EstadoCertificado, on_delete=models.CASCADE)
 
