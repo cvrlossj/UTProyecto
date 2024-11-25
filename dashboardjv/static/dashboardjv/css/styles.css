@@ -1,0 +1,5 @@
+table td, table th {
+ padding: 0.4rem;
+ font-size: 0.85rem;
+ white-space: nowrap;
+}

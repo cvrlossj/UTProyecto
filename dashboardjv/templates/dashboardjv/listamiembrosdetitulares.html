@@ -1,0 +1,140 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Miembros de la familia{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">{{familia.nombre}}</h2>
+        </div> 
+        
+        <div class="row">
+            <!-- Card Titular Familia -->
+            <div class="col-md-4">
+                <div class="card mb-4 border-1 rounded-2">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-black">Titular Familia</span>
+                        </div>
+                        <h3 class="card-title text-black d-flex align-items-center mt-2">
+                            <span class="d-flex align-items-center justify-content-center">
+                                <i class="ri-team-line"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2">{{titular.nombre}} {{titular.apellido}}</span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <!-- Total miembros de la familia -->
+            <div class="col-md-4">
+                <div class="card mb-2 border-1 rounded-2">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-black">Cantidad miembros de la familia</span>
+                        </div>
+                        <h3 class="card-title text-black d-flex align-items-center mt-2">
+                            <span class="d-flex align-items-center justify-content-center">
+                                <i class="ri-team-line"></i>
+                            </span>
+                            <span class="text-black fw-bolder ms-2">{{miembros_contar}}</span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-2 d-flex justify-content-start gap-2">
+                <a class="btn btn-primary" href="{% url "dashboardjv:crear_miembro_familia" titular.rut %}"><i class="ri-add-box-fill"></i> Agregar miembro a la familia</a>
+            </div>
+            <div class="container">
+                {% if messages %}
+                    <div class="alert alert-success" role="alert">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="container">
+                
+                <div class="col-md-12">
+                    <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                        <div class="card-body py-4 my-1">
+                            <h4 class="card-title text-black d-flex align-items-center">
+                                <span class="text-black mb-2">Miembros de la Familia</span>
+                                
+                            </h4>
+                            <div class="table-responsive">
+                                <table id="logsTableListaMiembros" class="table table-hover table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>RUT</th>
+                                                <th>DV</th>
+                                                <th>Nombre</th>
+                                                <th>Apellido</th>
+                                                <th>Parentesco</th>
+                                                <th>Sexo</th>
+                                                <th>Fecha de Nacimiento</th>
+                                                <th>Fecha Termino</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for miembro in miembros %}
+                                            <tr>
+                                                <td>{{ miembro.rut }}</td>
+                                                <td>{{ miembro.dv }}</td>
+                                                <td>{{ miembro.nombre }}</td>
+                                                <td>{{ miembro.apellido }}</td>
+                                                <td>{{ miembro.id_parentesco.descripcion }}</td>
+                                                <td>{{ miembro.id_sexo.descripcion }}</td>
+                                                <td>{{ miembro.fecha_nacimiento|date:"d/m/Y" }}</td>
+                                                <td>{{ miembro.fecha_termino|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if miembro.id_estadoperfil.descripcion == 'habilitado' %}
+                                                            text-bg-success
+                                                        {% else %}
+                                                            text-bg-danger
+                                                        {% endif %}">
+                                                        {{ miembro.id_estadoperfil.descripcion }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            Acciones
+                                                        </button>
+                                                        
+                                                        <!-- Menú desplegable -->
+                                                        <ul class="dropdown-menu">
+                                                            <li>
+                                                                <!-- Opción para editar -->
+                                                                <a class="dropdown-item edit-junta"  href="{% url 'dashboardjv:editar_miembro_familia' titular.rut miembro.rut %}"> 
+                                                                    <i class="ri-edit-2-line"></i> Editar miembro
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboardjv/js/tables.js' %}"></script>
+{% endblock script %}

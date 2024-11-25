@@ -1,0 +1,166 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Editar Vecino{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        {% if messages %}
+            <div class="alert alert-danger" role="alert">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <div class="mb-2">
+                        <h2 class="text-muted mb-3">Editando Vecino con RUT: {{ vecino.rut }} </h2>
+                    </div> 
+                
+                    <form method="post" id="editVecino" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <!-- Rut -->
+                            <div class="col-md-2">
+                                <label for="rut">Rut<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="rut" id="rut" value="{{vecino.rut}}" placeholder="Ingresar el rut" required disabled>
+                            </div>
+                            <!-- Dv -->
+                            <div class="col-md-2">
+                                <label for="dv">Dv<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="dv" id="dv"  value="{{vecino.dv}}" placeholder="Ingresar DV" required disabled>
+                            </div>
+                            <!-- Nombre -->
+                            <div class="col-md-3">
+                                <label for="nombre">Nombre<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" value="{{ vecino.nombre }}" placeholder="Ingresar el nombre" required>
+                            </div>
+                            <!-- Apellido -->
+                            <div class="col-md-3">
+                                <label for="apellido">Apellido<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" value="{{ vecino.apellido }}"  placeholder="Ingresar el apellido" required>
+                            </div>
+                            <!-- Fecha Nacimiento -->
+                            <div class="col-md-2">
+                                <label for="fecha_nacimiento">Fecha nacimiento<span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento" value="{{ vecino.fecha_nacimiento|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Sexo -->
+                            <div class="col-md-2">
+                                <label for="sexo">Sexo<span class="text-danger">*</span></label>
+                                <select class="form-control" name="sexo" id="sexo" required>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for sexo in sexos %}
+                                        <option value="{{ sexo.id_sexo }}" {% if sexo.id_sexo == vecino.id_sexo.id_sexo %}selected{% endif %}>{{ sexo.descripcion }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Parentesco -->
+                            <div class="col-md-2">
+                                <label for="parentesco">Parentesco<span class="text-danger">*</span></label>
+                                <select class="form-control" name="parentesco" id="parentesco" required>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for parentesco in parentescos %}
+                                        <option value="{{ parentesco.id_parentesco }}" {% if parentesco.id_parentesco == vecino.id_parentesco.id_parentesco %}selected{% endif %}>
+                                            {{ parentesco.descripcion }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Número contacto -->
+                            <div class="col-md-2">
+                                <label for="numero_contacto">Número de contacto<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="numero_contacto" id="numero_contacto" value="{{ vecino.numero_contacto }}" placeholder="número de contacto" required>
+                            </div>
+                            <!-- Email -->
+                            <div class="col-md-3">
+                                <label for="email">Email<span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="email" value="{{ vecino.correo_electronico }}" placeholder="Ingresar el email" required>
+                            </div>
+                            <!-- Fecha incorporación -->
+                            <div class="col-md-2">
+                                <label for="fecha_incorporacion">Fecha incorporación<span class="text-danger">*</span></label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fecha_incorporacion" id="fecha_incorporacion" value="{{ vecino.fecha_incorporacion|date:'Y-m-d' }}" placeholder="yyyy/mm/dd" required disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Dirección -->
+                            <div class="col-md-3 mb-4">
+                                <label for="direccion">Dirección<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccion" id="direccion" value="{{vecino.direccion}}" placeholder="Ingresar dirección del vecino" required>
+                            </div>
+
+                            {% if vecino.id_parentesco.id_parentesco == 1 %}
+                                <!-- Contraseña -->
+                                <div class="col-md-3 mb-4">
+                                    <label for="contrasena">Nueva Contraseña</label>
+                                    <input type="text" class="form-control" name="contrasena" id="contrasena" placeholder="Crear una contraseña">
+                                </div>
+                            {% endif %}
+                        
+                            <!-- Estado Perfil -->
+                            <div class="col-md-2">
+                                <label for="estado">Estado<span class="text-danger">*</span></label>
+                                <select class="form-control" name="estado" id="estado" required>
+                                    <option value="">Seleccione un estado</option>
+                                    {% for estado in estados_perfil %}
+                                        <option value="{{ estado.id_estadoperfil }}" 
+                                            {% if estado.id_estadoperfil == vecino.id_estadoperfil.id_estadoperfil %}selected{% endif %}>
+                                            {{ estado.descripcion }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Fecha Termino -->
+                            <div class="col-md-2">
+                                <label for="fecha_termino">Fecha termino</label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fecha_termino" id="fecha_termino" placeholder="yyyy/mm/dd"
+                                    {% if vecino.fecha_termino %}
+                                            value="{{ vecino.fecha_termino|date:'Y-m-d' }}" disabled
+                                        {% endif %}>
+                                </div>
+                            </div>
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardjv:listavecinos" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Editar Vecino</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+
+<script>
+    flatpickr("#fecha_incorporacion", {
+        minDate: "today",
+        locale: "es",
+    });
+    flatpickr("#fecha_termino", {
+        minDate: "today",
+        locale: "es",
+    });
+    flatpickr("#fecha_nacimiento", {
+        locale: "es",
+    });
+</script>
+{% endblock script %}

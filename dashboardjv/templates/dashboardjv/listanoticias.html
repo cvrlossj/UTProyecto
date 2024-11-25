@@ -1,0 +1,90 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Noticias{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">Lista de Noticias</h2>
+        </div> 
+
+        <div class="mb-2 d-flex justify-content-start gap-2">
+            <a class="btn btn-primary" href="{% url "dashboardjv:crearnoticia" %}"><i class="ri-newspaper-line"></i> Crear Noticia</a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row">
+
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h4 class="card-title text-black d-flex align-items-center">
+                        <span class="text-black mb-2">Lista Noticias</span>
+                    </h4>
+                    <div class="table-responsive">
+                        <table id="logsNoticias" class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Titulo</th>
+                                    <th scope="col">Fecha Inicio</th>
+                                    <th scope="col">Fecha Termino</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% comment %} Contenido aquí {% endcomment %}
+                            {% for noticia in noticias %}
+                                <tr>
+                                    <td>{{ noticia.nombre }}</td>
+                                    <td>{{ noticia.fecha_inicio|date:"d/m/Y" }}</td>
+                                    <td>{{ noticia.fecha_termino|date:"d/m/Y" }}</td>
+                                    <td>
+                                    {% if noticia.id_estadonoticia.id_estadonoticia == 1 %}
+                                        <span class="badge text-bg-success">{{noticia.id_estadonoticia.descripcion}}</span>
+                                    {% else %}
+                                        <span class="badge text-bg-success">{{noticia.id_estadonoticia.descripcion}}</span>  
+                                    {% endif %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            
+                                            <!-- Menú desplegable -->
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <!-- Opción para editar -->
+                                                    <a class="dropdown-item edit-junta" href="{% url "dashboardjv:editarnoticia" noticia.id_noticia %}"> 
+                                                        <i class="ri-edit-2-line"></i> Editar Noticia
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboardjv/js/tables.js' %}"></script>
+{% endblock script %}

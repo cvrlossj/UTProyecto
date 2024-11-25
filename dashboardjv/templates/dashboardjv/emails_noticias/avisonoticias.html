@@ -1,0 +1,91 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+<style>
+    .email-container {
+        max-width: 800px;
+        margin: 30px auto;
+    }
+    .email-header {
+        background: var(--bs-primary);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px 8px 0 0;
+    }
+    .email-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .fecha-info {
+        background-color: var(--bs-light);
+        border-left: 4px solid var(--bs-primary);
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    .noticia-contenido {
+        margin-top: 2rem;
+    }
+    .email-footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--bs-gray-200);
+        text-align: center;
+        color: var(--bs-gray-600);
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="email-container">
+    <!-- Header -->
+    <div class="email-header text-center">
+        <h1 class="display-6 mb-0">Nueva Noticia</h1>
+        <p class="lead mt-2 mb-0">{{ junta.nombre_organizacion }}</p>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="email-content">
+        <!-- Título de la noticia -->
+        <h2 class="text-primary mb-4">{{ noticia.nombre }}</h2>
+
+        <!-- Información de fechas -->
+        <div class="fecha-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-md-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        <strong>Fecha de publicación:</strong><br>
+                        {{ noticia.fecha_inicio }}
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Contenido de la noticia -->
+        <div class="noticia-contenido">
+            <div class="card">
+                <div class="card-body">
+                    {{ noticia.descripcion|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <p class="mb-2">
+                <i class="fas fa-info-circle me-2"></i>
+                Este es un mensaje automático de tu Junta de Vecinos
+            </p>
+            <small class="text-muted">
+                <i class="fas fa-envelope me-2"></i>
+                Por favor, no responder a este correo
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock content %}

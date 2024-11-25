@@ -1,23 +1,698 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
 # Vistas Genericas
 from django.views.generic import TemplateView, View
 # Utilidades
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.contrib import messages
+import logging
+from django.conf import settings
+from datetime import datetime, timedelta
+from django.utils.timezone import now
+from django.views.decorators.csrf import csrf_exempt
+# Modelos de dashboarda
+from dashboarda.models import JuntaVecinos
+# Modelos de accounts
+from accounts.models import Perfiles, Familia, EstadoPerfil, Sexo, Parentesco, Roles, Comuna
+# Modelos propios
+from django.db.models import Count
+from django.db.models import Q
+from .models import Noticias, EstadoNoticia
+# Email de Django
+from django.core.mail import EmailMultiAlternatives, send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+# Configurar logging
+logger = logging.getLogger(__name__)
+
+#! ---- [Vecinos] ----
+@method_decorator(login_required, name='dispatch')
+class ListaVecinosView(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        vecinos = junta.perfiles.filter(id_rol=3)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'vecinos': vecinos,
+        }
+        return render(request, 'dashboardjv/listavecinos.html', context)
+        
+
+@method_decorator(login_required, name='dispatch')
+class CrearVecinoTitularView(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        sexos = Sexo.objects.all()
+        parentescos = Parentesco.objects.filter(id_parentesco=1)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'sexos': sexos,
+            'parentescos': parentescos,
+        }
+        return render(request, 'dashboardjv/crearvecinotitular.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        rut = request.POST.get('rut')
+        dv = request.POST.get('dv')
+        nombre = request.POST.get('nombre')
+        apellido = request.POST.get('apellido')
+        fecha_nacimiento = request.POST.get('fecha_nacimiento')
+        sexo_id = request.POST.get('sexo')
+        parentesco_id = request.POST.get('parentesco')
+        numero_contacto = request.POST.get('numero_contacto')
+        email = request.POST.get('email')
+        fecha_incorporacion = request.POST.get('fecha_incorporacion')
+        direccion = request.POST.get('direccion')
+        contrasena = request.POST.get('contrasena')
+        
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        if not all([rut, dv, nombre, apellido, fecha_nacimiento, sexo_id, numero_contacto, email, fecha_incorporacion, direccion, contrasena]):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('dashboardjv:crearvecino')
+        
+        
+        comuna_junta = junta.id_comuna  
+        if not comuna_junta:
+            messages.error(request, 'La junta de vecinos no tiene una comuna asignada.')
+            return redirect('dashboardjv:crearvecino')
+        
+        try:
+            # Obtener instancias de claves foráneas
+            sexo = get_object_or_404(Sexo, id_sexo=sexo_id)
+            parentesco = get_object_or_404(Parentesco, id_parentesco=parentesco_id)
+            rol = get_object_or_404(Roles, id_rol=3)
+            estado_perfil = get_object_or_404(EstadoPerfil, id_estadoperfil=1)
+            
+            vecino = Perfiles.objects.create(
+                rut=rut,
+                dv=dv,
+                nombre=nombre,
+                apellido=apellido,
+                fecha_nacimiento=fecha_nacimiento,
+                id_sexo=sexo,
+                id_parentesco=parentesco,
+                numero_contacto=numero_contacto,
+                correo_electronico=email,
+                fecha_incorporacion=fecha_incorporacion,
+                direccion=direccion,
+                id_rol=rol,
+                id_estadoperfil=estado_perfil,
+                id_comuna=comuna_junta,
+            )
+            vecino.set_password(contrasena)
+            vecino.save()
+            junta.perfiles.add(vecino)
+            
+            if parentesco.descripcion == "Titular":
+                familia = Familia.objects.create(
+                    titular=vecino,
+                    nombre=f"Familia {nombre} {apellido}",
+                )
+                vecino.familia = familia 
+                vecino.save()
+            else: 
+                titular_familia = Perfiles.objects.filter(
+                    id_parentesco__nombre="Titular",
+                    id_comuna=comuna_junta
+                ).first()
+                if titular_familia and titular_familia.familia:
+                    vecino.familia = titular_familia.familia
+                    vecino.save()
+                else:
+                    messages.error(request, 'No se encontró un titular en la comuna para asociar a la familia.')
+                    return redirect('dashboardjv:crearvecino')
+            
+            messages.success(request, f'El vecino {nombre} {apellido} ha sido creado exitosamente.')
+            return redirect('dashboardjv:listavecinos')
+
+        except Exception as e:
+            messages.error(request, f'Ocurrió un error al crear el vecino: {str(e)}')
+            return redirect('dashboardjv:crearvecino')
+        
+
+@method_decorator(login_required, name='dispatch')
+class EditarVecinoTitular(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        vecino = get_object_or_404(Perfiles, rut=kwargs['rut'])
+        sexos = Sexo.objects.all()
+        estados_perfil = EstadoPerfil.objects.all()
+        
+        if vecino.id_parentesco.descripcion == "Titular":
+            parentescos = Parentesco.objects.filter(id_parentesco=1)
+        else:
+            parentescos = Parentesco.objects.exclude(id_parentesco=1)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'vecino': vecino,
+            'sexos': sexos,
+            'parentescos': parentescos,
+            'estados_perfil': estados_perfil,
+        }
+        return render(request, 'dashboardjv/editarvecinotitular.html', context)
+
+    def post(self, request, *args, **kwargs):
+        rut = kwargs['rut']
+        vecino = get_object_or_404(Perfiles, rut=rut)
+        
+        nombre = request.POST.get('nombre')
+        apellido = request.POST.get('apellido')
+        fecha_nacimiento = request.POST.get('fecha_nacimiento')
+        sexo_id = request.POST.get('sexo')
+        parentesco_id = request.POST.get('parentesco')
+        numero_contacto = request.POST.get('numero_contacto')
+        email = request.POST.get('email')
+        direccion = request.POST.get('direccion')
+        contrasena = request.POST.get('contrasena')
+        estado_id = request.POST.get('estado')
+        fecha_termino = request.POST.get('fecha_termino')
+        
+        try:
+            vecino.nombre = nombre
+            vecino.apellido = apellido
+            vecino.fecha_nacimiento = fecha_nacimiento
+            vecino.id_sexo = get_object_or_404(Sexo, id_sexo=sexo_id)
+            vecino.id_parentesco = get_object_or_404(Parentesco, id_parentesco=parentesco_id)
+            vecino.numero_contacto = numero_contacto
+            vecino.correo_electronico = email
+            vecino.direccion = direccion
+            vecino.id_estadoperfil = get_object_or_404(EstadoPerfil, id_estadoperfil=estado_id)  # Actualizar el estado
+            if fecha_termino:
+                vecino.fecha_termino = fecha_termino
+            if contrasena: 
+                vecino.set_password(contrasena)
+            
+            vecino.save()
+            
+            messages.success(request, 'El perfil del vecino se ha actualizado correctamente.')
+            return redirect('dashboardjv:listavecinos')
+
+        except Exception as e:
+            messages.error(request, f'Ocurrió un error al actualizar el vecino: {str(e)}')
+            return redirect('dashboardjv:editarvecino', rut=rut)
+
+# ! ---- [Lista Miembros de una Familia] ----
+@method_decorator(login_required, name='dispatch')
+class ListaMiembrosFamilia(View):
+    def get(self, request, rut, *args, **kwargs):
+        try:
+            # Obtenemos el titular de la familia
+            titular = get_object_or_404(Perfiles, rut=rut, id_parentesco__descripcion="Titular")
+            
+            familia = titular.familia
+            
+            if not familia:
+                messages.error(request, 'El titular no tiene una familia asignada.')
+                return redirect('dashboardjv:listavecinos')
+            
+            # Obtener todos los vecinos asociados a esta familia
+            miembros = familia.miembros.exclude(id_parentesco = 1)
+            miembros_contar = familia.miembros.exclude(id_parentesco = 1).count()
+            
+            context = {
+                'titular': titular,
+                'familia': familia,
+                'miembros': miembros,
+                'miembros_contar': miembros_contar,
+            }
+            return render(request, 'dashboardjv/listamiembrosdetitulares.html', context)
+        except Exception as e:
+            messages.error(request, f'Ocurrió un error al obtener los miembros de la familia: {str(e)}')
+            return redirect('dashboardjv:listavecinos')
+        
+        
+@method_decorator(login_required, name='dispatch')
+class CrearVecinoMiembroView(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        sexos = Sexo.objects.all()
+        parentescos = Parentesco.objects.exclude(id_parentesco=1) 
+        
+        titular_rut = kwargs.get('rut')
+        titular = get_object_or_404(Perfiles, rut=titular_rut, id_parentesco__descripcion="Titular")
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'sexos': sexos,
+            'parentescos': parentescos,
+            'titular': titular
+        }
+        return render(request, 'dashboardjv/crearvecinootro.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        rut = request.POST.get('rut')
+        dv = request.POST.get('dv')
+        nombre = request.POST.get('nombre')
+        apellido = request.POST.get('apellido')
+        fecha_nacimiento = request.POST.get('fecha_nacimiento')
+        sexo_id = request.POST.get('sexo')
+        parentesco_id = request.POST.get('parentesco')
+        numero_contacto = request.POST.get('numero_contacto')
+        email = request.POST.get('email')
+        fecha_incorporacion = request.POST.get('fecha_incorporacion')
+        direccion = request.POST.get('direccion')
+        # contrasena = request.POST.get('contrasena')
+        
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        titular_rut = kwargs.get('rut')
+        titular = get_object_or_404(Perfiles, rut=titular_rut, id_parentesco__descripcion="Titular")
+        
+        if not all([rut, dv, nombre, apellido, fecha_nacimiento, sexo_id, numero_contacto, email, fecha_incorporacion, direccion]):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('dashboardjv:crear_miembro_familia', rut=titular_rut)
+        
+        try:
+            sexo = get_object_or_404(Sexo, id_sexo=sexo_id)
+            parentesco = get_object_or_404(Parentesco, id_parentesco=parentesco_id)
+            rol = get_object_or_404(Roles, id_rol=3)
+            estado_perfil = get_object_or_404(EstadoPerfil, id_estadoperfil=1)
+            
+            vecino = Perfiles.objects.create(
+                rut=rut,
+                dv=dv,
+                nombre=nombre,
+                apellido=apellido,
+                fecha_nacimiento=fecha_nacimiento,
+                id_sexo=sexo,
+                id_parentesco=parentesco,
+                numero_contacto=numero_contacto,
+                correo_electronico=email,
+                fecha_incorporacion=fecha_incorporacion,
+                direccion=direccion,
+                id_rol=rol,
+                id_estadoperfil=estado_perfil,
+                id_comuna=junta.id_comuna,
+            )
+            vecino.save()
+            junta.perfiles.add(vecino)
+            
+            # Asociar a la familia del titular
+            vecino.familia = titular.familia
+            vecino.save()
+            
+            messages.success(request, f'El miembro {nombre} {apellido} ha sido creado exitosamente y asociado a la familia de {titular.nombre}.')
+            return redirect('dashboardjv:lista_familia', rut=titular_rut)
+        
+        except Exception as e:
+            messages.error(request, f'Ocurrió un error al crear el miembro: {str(e)}')
+            return redirect('dashboardjv:crear_miembro_familia', rut=titular_rut)
+
+
+@method_decorator(login_required, name='dispatch')
+class EditarVecinoMiembroView(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        vecino_rut = kwargs.get('rut')
+        titular_rut = kwargs.get('titular_rut')
+        estados_perfil = EstadoPerfil.objects.all()
+        
+        # Validar que el titular existe y pertenece a la junta
+        titular = get_object_or_404(
+            Perfiles,
+            rut=titular_rut,
+            id_parentesco__descripcion="Titular",
+            familia__in=junta.perfiles.values_list('familia', flat=True)
+        )
+        
+        # Validar que el vecino pertenece a la misma familia de la junta
+        vecino = get_object_or_404(
+            Perfiles,
+            rut=vecino_rut,
+            familia__in=junta.perfiles.values_list('familia', flat=True)
+        )
+        
+        # Obtener sexos y parentescos
+        sexos = Sexo.objects.all()
+        parentescos = Parentesco.objects.exclude(id_parentesco=1)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'titular': titular,
+            'vecino': vecino,
+            'sexos': sexos,
+            'parentescos': parentescos,
+            'estados_perfil': estados_perfil,
+        }
+        return render(request, 'dashboardjv/editarvecinootro.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        vecino_rut = kwargs.get('rut')
+        titular_rut = kwargs.get('titular_rut')
+        
+        titular = get_object_or_404(
+            Perfiles,
+            rut=titular_rut,
+            id_parentesco__descripcion="Titular",
+            familia__in=junta.perfiles.values_list('familia', flat=True)
+        )
+        
+        # Validar que el vecino pertenece a la misma familia de la junta
+        vecino = get_object_or_404(
+            Perfiles,
+            rut=vecino_rut,
+            familia__in=junta.perfiles.values_list('familia', flat=True)
+        )
+        
+        # Capturar datos del formulario
+        nombre = request.POST.get('nombre')
+        apellido = request.POST.get('apellido')
+        fecha_nacimiento = request.POST.get('fecha_nacimiento')
+        sexo_id = request.POST.get('sexo')
+        parentesco_id = request.POST.get('parentesco')
+        numero_contacto = request.POST.get('numero_contacto')
+        email = request.POST.get('email')
+        direccion = request.POST.get('direccion')
+        estado_id = request.POST.get('estado')
+        fecha_termino = request.POST.get('fecha_termino')
+
+        # Validar y guardar cambios
+        try:
+            vecino.nombre = nombre
+            vecino.apellido = apellido
+            vecino.fecha_nacimiento = fecha_nacimiento
+            vecino.id_sexo_id = sexo_id
+            vecino.id_parentesco_id = parentesco_id
+            vecino.numero_contacto = numero_contacto
+            vecino.correo_electronico = email
+            vecino.direccion = direccion
+            vecino.id_estadoperfil_id = estado_id
+            if fecha_termino:
+                vecino.fecha_termino = fecha_termino
+            vecino.save()
+            # Mensaje de éxito
+            messages.success(request, "El miembro fue actualizado exitosamente.")
+            return redirect('dashboardjv:lista_familia', titular_rut)
+        except Exception as e:
+            # Mensaje de error
+            messages.error(request, f"Hubo un error al actualizar el miembro: {str(e)}")
+            return redirect('dashboardjv:editar_miembro_familia', titular_rut=titular_rut, rut=vecino_rut)
+
+# ! ---- [Final de Familia] ----
+        
+#! ---- [Noticias] ----
+@method_decorator(login_required, name='dispatch')
+class ListaNoticias(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        noticias = Noticias.objects.filter(id_juntavecinos=junta)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'noticias': noticias,
+        }
+        return render(request, 'dashboardjv/listanoticias.html', context)
+
+@method_decorator(login_required, name='dispatch')
+class CrearNoticia(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        total_miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'total_miembros': total_miembros
+        }
+        return render(request, 'dashboardjv/crearnoticia.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        titulo = request.POST.get('titulo')
+        descripcion = request.POST.get('descripcion')
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_termino = request.POST.get('fecha_termino', None)
+        
+        if titulo and descripcion and fecha_inicio:
+            try:
+                estado = EstadoNoticia.objects.get(pk=1)
+                noticia = Noticias.objects.create(
+                    nombre=titulo,
+                    descripcion=descripcion,
+                    fecha_inicio=fecha_inicio,
+                    fecha_termino=fecha_termino,
+                    id_estadonoticia=estado,
+                    id_juntavecinos=junta
+                )
+
+                miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1)
+                correos = [miembro.correo_electronico for miembro in miembros if miembro.correo_electronico]
+
+                if correos:
+                    try:
+                        # Crear el contenido HTML
+                        html_content = f"""
+                        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+                            <div style="background-color: #007bff; color: white; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0;">{junta.nombre_organizacion}</h1>
+                                <p style="margin: 10px 0 0 0;">Nueva Noticia</p>
+                            </div>
+                            
+                            <div style="padding: 20px; background-color: #f8f9fa;">
+                                <h2 style="color: #007bff;">{noticia.nombre}</h2>
+                                
+                                <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                                    <p><strong>Fecha de publicación:</strong> {noticia.fecha_inicio}</p>
+                                </div>
+                                
+                                <div style="background-color: white; padding: 15px; border-radius: 5px;">
+                                    {noticia.descripcion}
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 0.9em;">
+                                    <p>Este es un mensaje automático de tu Junta de Vecinos</p>
+                                    <p>Por favor, no responder a este correo</p>
+                                </div>
+                            </div>
+                        </div>
+                        """
+
+                        text_content = f"""
+                        {junta.nombre_organizacion}
+                        Nueva Noticia
+
+                        {noticia.nombre}
+
+                        Fecha publicación : {noticia.fecha_inicio}
+
+                        {noticia.descripcion}
+
+                        Este es un mensaje automático de tu Junta de Vecinos
+                        Por favor, no responder a este correo
+                        """
+
+                        subject = f"Nueva noticia: {noticia.nombre}"
+                        for correo in correos:
+                            email = EmailMultiAlternatives(
+                                subject=subject,
+                                body=text_content,
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                to=[correo] 
+                            )
+                            email.attach_alternative(html_content, "text/html")
+                            email.send()
+
+                        messages.success(request, "Noticia creada y enviada exitosamente.")
+
+                    except Exception as e:
+                        logger.error(f"Error al enviar el correo: {str(e)}")
+                        messages.warning(request, "La noticia se creó pero hubo un error al enviar los correos.")
+
+                return redirect('dashboardjv:listanoticias')
+
+            except Exception as e:
+                logger.error(f"Error al crear la noticia: {str(e)}")
+                messages.error(request, f'Error al crear la noticia: {str(e)}')
+                context = {
+                    'user': user,
+                    'junta': junta,
+                }
+                return render(request, 'dashboardjv/crearnoticia.html', context)
+        else:
+            messages.error(request, 'Todos los campos obligatorios deben ser completados.')
+            context = {
+                'user': user,
+                'junta': junta,
+            }
+            return render(request, 'dashboardjv/crearnoticia.html', context)
 
 
 
+@method_decorator(login_required, name='dispatch')
+class EditarNoticia(View):
+    def get(self, request, id_noticia, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        noticia = get_object_or_404(Noticias, id_noticia=id_noticia, id_juntavecinos=junta)
+        total_miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+        estado_noticia = EstadoNoticia.objects.all()
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'noticia': noticia,
+            'total_miembros': total_miembros,
+            'estados': estado_noticia
+        }
+        return render(request, 'dashboardjv/editarnoticia.html', context)
+    
+    def post(self, request, id_noticia, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        noticia = get_object_or_404(Noticias, id_noticia=id_noticia, id_juntavecinos=junta)
+        
+        # Obtener los elementos del html
+        titulo = request.POST.get('titulo')
+        descripcion = request.POST.get('descripcion')  
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_termino = request.POST.get('fecha_termino', None)
+        estado = request.POST.get('estado')
+        
+        if titulo and descripcion and fecha_inicio:
+            try:
+                noticia.nombre = titulo
+                noticia.descripcion = descripcion
+                if fecha_inicio:
+                    noticia.fecha_inicio = fecha_inicio
+                if fecha_termino:
+                    noticia.fecha_termino = fecha_termino
+                noticia.fecha_termino = fecha_termino
+                noticia.id_estadonoticia = EstadoNoticia.objects.get(pk=estado)
+                noticia.save()
+                
+                miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1)
+                correos = [miembro.correo_electronico for miembro in miembros if miembro.correo_electronico]
+                
+        
+                if correos:
+                    try:
+                        html_content = f"""
+                        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+                            <div style="background-color: #007bff; color: white; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0;">{junta.nombre_organizacion}</h1>
+                                <p style="margin: 10px 0 0 0;">Edición de Noticia</p>
+                            </div>
+                            
+                            <div style="padding: 20px; background-color: #f8f9fa;">
+                                <h2 style="color: #007bff;">{noticia.nombre}</h2>
+                                
+                                <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                                    <p><strong>Fecha de modificación:</strong> {noticia.fecha_inicio}</p>
+                                </div>
+                                
+                                <div style="background-color: white; padding: 15px; border-radius: 5px;">
+                                    {noticia.descripcion}
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 0.9em;">
+                                    <p>Este es un mensaje automático de tu Junta de Vecinos</p>
+                                    <p>Por favor, no responder a este correo</p>
+                                </div>
+                            </div>
+                        </div>
+                        """
+
+                        text_content = f"""
+                        {junta.nombre_organizacion}
+                        Edición de Noticia
+
+                        {noticia.nombre}
+
+                        Fecha de modificación: {noticia.fecha_inicio}
+
+                        {noticia.descripcion}
+
+                        Este es un mensaje automático de tu Junta de Vecinos
+                        Por favor, no responder a este correo
+                        """
+
+                        subject = f"Noticia editada: {noticia.nombre}"
+                        for correo in correos:
+                            email = EmailMultiAlternatives(
+                                subject=subject,
+                                body=text_content,
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                to=[correo]
+                            )
+                            email.attach_alternative(html_content, "text/html")
+                            email.send()
+
+                        messages.success(request, "Noticia editada y notificación enviada exitosamente.")
+
+                    except Exception as e:
+                        logger.error(f"Error al enviar el correo: {str(e)}")
+                        messages.warning(request, "La noticia se editó pero hubo un error al enviar los correos.")
+
+                return redirect('dashboardjv:listanoticias')
+        
+            except Exception as e:
+                logger.error(f"Error al crear la noticia: {str(e)}")
+                messages.error(request, f'Error al crear la noticia: {str(e)}')
+                context = {
+                    'user': user,
+                    'junta': junta,
+                }
+                return render(request, 'dashboardjv/editarnoticia.html', context)
+        
+        else:
+            messages.error(request, 'Todos los campos obligatorios deben ser completados.')
+
+        context = {
+            'user': user,
+            'junta': junta,
+            'noticia': noticia,
+        }
+        return render(request, 'dashboardjv/editarnoticia.html', context)
+        
+        
+#! ---- [Final de Noticias]
+
+
+#! ---- [Dashboard Junta de Vecinos] ----
 @method_decorator(login_required, name='dispatch')
 class DashboardJuntaVecino(TemplateView):
     template_name = "dashboardjv/dashboardjuntavecino.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Dashboard Junta de Vecinos'
         user = self.request.user
         
+
+        # Obtener la junta asociada al perfil del usuario
+        junta = JuntaVecinos.objects.filter(perfiles=user).first()
+
         context.update({
             'user': user,
+            'junta': junta,
         })
-        
         return context
+    
+

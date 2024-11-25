@@ -1,14 +1,16 @@
 {% extends "dashboardjv/basedashjv.html" %}
 {% load static %}
 
-{% block title %}sd{% endblock title %}
+{% block title %}Junta de Vecinos{% endblock title %}
 
 {% block content %}
     {% csrf_token %}
     <div class="container">
         <div class="mb-2">
             <h2 class="text-muted">Buenos días, <span class="text-black">{{request.user.nombre}} {{request.user.apellido}}</span></h2>
-            <p class="text-muted">Realiza seguimiento a las Juntas de Vecinos</p>
+            <h5 class="text-muted">
+                Administrando: <span class="text-black">{{ junta.nombre_organizacion }}</span>
+            </h5>
         </div> 
 
         <div class="row">
@@ -17,7 +19,7 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-black">Total Junta Vecinos</span>
+                            <span class="text-black">Total Vecinos</span>
                             <select class="form-select form-select-sm filter-select" 
                                     data-filter-type="total" 
                                     id="filter-total" 
@@ -32,7 +34,7 @@
                         </div>
                         <h3 class="card-title text-black d-flex align-items-center mt-2">
                             <span class="text-black d-flex align-items-center justify-content-center">
-                                <i class="ri-team-line"></i>
+                                <i class="ri-group-line"></i>
                             </span>
                             <span class="text-black fw-bolder ms-2" id="total_juntas_count">{{total_juntas}}</span>
                         </h3>
@@ -45,7 +47,7 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-black">Total Junta Vecinos <span class="badge text-bg-success">habilitadas</span></span>
+                            <span class="text-black">Total Vecinos <span class="badge text-bg-success">habilitadas</span></span>
                             <select class="form-select form-select-sm filter-select" 
                                     data-filter-type="habilitadas" 
                                     id="filter-habilitadas" 
@@ -60,7 +62,7 @@
                         </div>
                         <h3 class="card-title text-black d-flex align-items-center mt-2">
                             <span class="text-black d-flex align-items-center justify-content-center">
-                                <i class="ri-team-line"></i>
+                                <i class="ri-group-line"></i>
                             </span>
                             <span class="text-black fw-bolder ms-2" id="habilitadas_juntas_count">{{habilitadas_juntas}}</span>
                         </h3>
@@ -73,7 +75,7 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-black">Total Junta Vecinos <span class="badge text-bg-danger">inhabilitadas</span></span>
+                            <span class="text-black">Total Vecinos <span class="badge text-bg-danger">inhabilitadas</span></span>
                             <select class="form-select form-select-sm filter-select" 
                                     data-filter-type="inhabilitadas" 
                                     id="filter-inhabilitadas" 
@@ -88,7 +90,7 @@
                         </div>
                         <h3 class="card-title text-black d-flex align-items-center mt-2">
                             <span class="text-black d-flex align-items-center justify-content-center">
-                                <i class="ri-team-line"></i>
+                                <i class="ri-group-line"></i>
                             </span>
                             <span class="text-black fw-bolder ms-2" id="inhabilitadas_juntas_count">{{inhabilitadas_juntas}}</span>
                         </h3>
@@ -104,19 +106,16 @@
             <div class="col-12">
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-4 my-1">
-                        <span class="text-black fs-5 ms-4">Comparación de Juntas de Vecinos Integradas vs. Inhabilitadas</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12">
-                <div class="card mb-4 border-1 rounded-2">
-                    <div class="card-body py-4 my-1">
-                        <span class="text-black fs-5 ms-4">Cantidad de Juntas de Vecinos por Región</span>
+                        <span class="text-black fs-5 ms-4">Comparación de Vecinos Integrados vs. Inhabilitados</span>
+                        <canvas id="chartCanvas"></canvas> <!-- Contenedor del gráfico -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
 {% endblock content %}
+
+{% block script %}
+
+{% endblock script %}
 

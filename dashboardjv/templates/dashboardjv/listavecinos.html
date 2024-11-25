@@ -1,0 +1,119 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Vecinos{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">Lista de Vecinos</h2>
+        </div> 
+
+        <div class="mb-2 d-flex justify-content-start gap-2">
+            <a class="btn btn-primary" href="{% url "dashboardjv:crearvecino" %}"><i class="ri-add-box-fill"></i> Crear Vecino</a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row">
+
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h4 class="card-title text-black d-flex align-items-center">
+                        <span class="text-black mb-2">Lista Vecinos</span>
+                    </h4>
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table id="logsTableVecinos" class="table table-hover table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">RUT</th>
+                                    <th scope="col">DV</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Apellido</th>
+                                    <th scope="col">Familia</th>
+                                    <th scope="col">Sexo</th>
+                                    <th scope="col">Parentesco</th>
+                                    <th scope="col">Dirección</th>
+                                    <th scope="col">Fec. Incorporación</th>
+                                    <th scope="col">Fec. Termino</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% comment %} Contenido aquí {% endcomment %}
+                            {% for vecino in vecinos %}
+                                <tr>
+                                    <td>{{ vecino.rut }}</td>
+                                    <td>{{ vecino.dv }}</td>
+                                    <td>{{ vecino.nombre }}</td>
+                                    <td>{{ vecino.apellido }}</td>
+                                    <td>
+                                        {% if vecino.familia %}
+                                            {{ vecino.familia.nombre }}
+                                        {% else %}
+                                            Sin familia
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ vecino.id_sexo.descripcion }}</td>
+                                    <td>{{ vecino.id_parentesco.descripcion }}</td>
+                                    <td>{{ vecino.direccion }}</td>
+                                    <td>{{ vecino.fecha_incorporacion|date:"d/m/Y" }}</td>
+                                    <td>{{ vecino.fecha_termino|date:"d/m/Y" }}</td>
+                                    <td>
+                                    {% if vecino.id_estadoperfil.id_estadoperfil == 1 %}
+                                        <span class="badge text-bg-success">habilitado</span>
+                                    {% else %}
+                                        <span class="badge text-bg-danger">inhabilitado</span>    
+                                    {% endif %}
+                                    <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <!-- Botón principal que despliega el dropdown -->
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Acciones
+                                        </button>
+                                        
+                                        <!-- Menú desplegable -->
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <!-- Opción para editar -->
+                                                <a class="dropdown-item edit-junta" href="{% url 'dashboardjv:editarvecino' vecino.rut %}"> 
+                                                    <i class="ri-edit-2-line"></i> Editar Vecino
+                                                </a>
+                                                {% if vecino.id_parentesco.descripcion == 'Titular' %}
+                                                    <a class="dropdown-item edit-junta" href="{% url 'dashboardjv:lista_familia' vecino.rut %}"> 
+                                                        <i class="ri-group-line"></i> Miembros de la familia
+                                                    </a>
+                                                {% endif %}
+                                                {% comment %} <a class="dropdown-item edit-junta" href="{% url 'dashboarda:editar_juntavecinos' junta.id_juntavecino %}"> 
+                                                    <i class="ri-user-add-line"></i> Agregar miembro a la familia
+                                                </a> {% endcomment %}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboardjv/js/tables.js' %}"></script>
+{% endblock script %}

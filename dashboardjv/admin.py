@@ -1,7 +1,13 @@
 from django.contrib import admin
-from .models import EstadoPostulacion, EstadoCertificado, EstadoNoticia, EstadoActividad, Actividad, JuntaVecinos, PostulacionProyectos
+from .models import Noticias, EstadoPostulacion, EstadoCertificado, EstadoNoticia, EstadoActividad, Actividad, PostulacionProyectos
 
-# Register your models here.
+
+
+@admin.register(Noticias)
+class NoticiasAdmin(admin.ModelAdmin):
+   list_display = ('id_noticia', 'nombre','fecha_inicio', 'fecha_termino')
+   search_fields = ('nombre',)
+
 
 @admin.register(EstadoPostulacion)
 class EstadoPostulacionAdmin(admin.ModelAdmin):
