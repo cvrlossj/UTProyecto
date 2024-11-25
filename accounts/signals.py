@@ -1,6 +1,6 @@
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
-from .models import EstadoPerfil, EstadoNoticia, EstadoActividad, EstadoCertificado, EstadoPostulacion, Region, Comuna, Roles, Sexo, Parentesco
+from .models import EstadoPerfil, Region, Comuna, Roles, Sexo, Parentesco
 
 @receiver(post_migrate)
 def create_default_data(sender, **kwargs):
@@ -8,18 +8,6 @@ def create_default_data(sender, **kwargs):
         EstadoPerfil.objects.get_or_create(id_estadoperfil=1, descripcion='habilitado')
         EstadoPerfil.objects.get_or_create(id_estadoperfil=2, descripcion='inhabilitado')
         
-        EstadoNoticia.objects.get_or_create(id_estadonoticia=1, descripcion='habilitada')
-        EstadoNoticia.objects.get_or_create(id_estadonoticia=2, descripcion='inhabilitada')
-        
-        EstadoActividad.objects.get_or_create(id_estadoactividad=1, descripcion='habilitada')
-        EstadoActividad.objects.get_or_create(id_estadoactividad=2, descripcion='inhabilitada')
-        
-        EstadoCertificado.objects.get_or_create(id_estadocertificado=1, descripcion='pendiente')
-        EstadoCertificado.objects.get_or_create(id_estadocertificado=2, descripcion='emitido')
-        
-        EstadoPostulacion.objects.get_or_create(id_estadopostulacion=1, descripcion='pendiente')
-        EstadoPostulacion.objects.get_or_create(id_estadopostulacion=2, descripcion='aprobado')
-        EstadoPostulacion.objects.get_or_create(id_estadopostulacion=3, descripcion='rechazado')
         
         Region.objects.get_or_create(id_region=1, nombre_region='Arica y Parinacota')
         Region.objects.get_or_create(id_region=2, nombre_region='Tarapacá')

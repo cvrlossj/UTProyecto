@@ -41,34 +41,6 @@ class EstadoPerfil(models.Model):
   def __str__(self):
       return f"{self.id_estadoperfil} - {self.descripcion}"
     
-class EstadoNoticia(models.Model):
-  id_estadonoticia = models.AutoField(unique=True, primary_key=True)
-  descripcion = models.CharField(max_length=30)
-  
-  def __str__(self):
-      return f"{self.id_estadonoticia} - {self.descripcion}"
-    
-class EstadoActividad(models.Model):
-  id_estadoactividad = models.AutoField(unique=True, primary_key=True)
-  descripcion = models.CharField(max_length=30)
-  
-  def __str__(self):
-      return f"{self.id_estadoactividad} - {self.descripcion}"
-    
-class EstadoCertificado(models.Model):
-  id_estadocertificado = models.AutoField(unique=True, primary_key=True)
-  descripcion = models.CharField(max_length=30)
-  
-  def __str__(self):
-      return f"{self.id_estadocertificado} - {self.descripcion}"
-
-class EstadoPostulacion(models.Model):
-  id_estadopostulacion = models.AutoField(unique=True, primary_key=True)
-  descripcion = models.CharField(max_length=30)
-  
-  def __str__(self):
-      return f"{self.id_estadopostulacion} - {self.descripcion}"
-
 class Region(models.Model):
   id_region = models.AutoField(unique=True, primary_key=True)
   nombre_region = models.CharField(max_length=80)
@@ -128,7 +100,14 @@ class Perfiles(AbstractUser):
   id_rol = models.ForeignKey(Roles, on_delete=models.CASCADE, null=True, blank=True)
   id_comuna = models.ForeignKey(Comuna, on_delete=models.CASCADE, null=True, blank=True)
   id_estadoperfil = models.ForeignKey(EstadoPerfil, on_delete=models.CASCADE, null=True, blank=True, default=1)
-  
+  familia = models.ForeignKey(
+        'Familia',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='miembros',
+        help_text="Familia a la que pertenece este perfil"
+    )
 
   USERNAME_FIELD = 'rut'
   REQUIRED_FIELDS = ['correo_electronico', 'nombre', 'apellido']
@@ -137,3 +116,28 @@ class Perfiles(AbstractUser):
 
   def __str__(self):
     return f"{self.rut} - {self.nombre} {self.apellido}"
+  
+  
+class Familia(models.Model):
+  id_familia = models.AutoField(primary_key=True)
+  titular = models.OneToOneField(
+        Perfiles, 
+        on_delete=models.CASCADE, 
+        related_name='familia_titular',
+        help_text="El titular de la familia"
+    )
+  nombre = models.CharField(
+        max_length=100, 
+        help_text="Nombre de la familia o grupo (puedes usar el apellido del titular, por ejemplo)"
+    )
+  fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+  def __str__(self):
+      return f"Familia {self.nombre} (Titular: {self.titular.nombre})"
+
+  @property
+  def miembros(self):
+        """
+        Retorna todos los miembros de la familia, incluyendo al titular.
+        """
+        return Perfiles.objects.filter(familia=self)

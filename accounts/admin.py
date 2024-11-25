@@ -1,30 +1,9 @@
 from django.contrib import admin
-from .models import EstadoPerfil, EstadoNoticia, EstadoActividad, EstadoCertificado, EstadoPostulacion, Region, Comuna, Roles, Sexo, Parentesco, Perfiles
+from .models import EstadoPerfil, Region, Comuna, Roles, Sexo, Parentesco, Perfiles, Familia
 
 @admin.register(EstadoPerfil)
 class EstadoPerfilAdmin(admin.ModelAdmin):
    list_display = ('id_estadoperfil', 'descripcion')
-   search_fields = ('descripcion',)
-
-
-@admin.register(EstadoNoticia)
-class EstadoNoticiaAdmin(admin.ModelAdmin):
-   list_display = ('id_estadonoticia', 'descripcion')
-   search_fields = ('descripcion',)
-   
-@admin.register(EstadoActividad)
-class EstadoActividadAdmin(admin.ModelAdmin):
-   list_display = ('id_estadoactividad', 'descripcion')
-   search_fields = ('descripcion',)
-   
-@admin.register(EstadoCertificado)
-class EstadoCertificadoAdmin(admin.ModelAdmin):
-   list_display = ('id_estadocertificado', 'descripcion')
-   search_fields = ('descripcion',)
-   
-@admin.register(EstadoPostulacion)
-class EstadoPostulacionAdmin(admin.ModelAdmin):
-   list_display = ('id_estadopostulacion', 'descripcion')
    search_fields = ('descripcion',)
 
 
@@ -65,3 +44,8 @@ class PerfilesAdmin(admin.ModelAdmin):
    list_display = ('rut', 'nombre', 'apellido', 'numero_contacto', 'correo_electronico', 'id_estadoperfil')
    search_fields = ('nombre', 'apellido', 'rut')
    
+
+@admin.register(Familia)
+class FamiliasAdmin(admin.ModelAdmin):
+   list_display = ('id_familia', 'nombre')
+   search_fields = ('nombre',)
