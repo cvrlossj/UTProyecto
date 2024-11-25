@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -130,7 +130,18 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 LOGIN_URL = "/accounts/login/"
 
-# Django Select2 Configuration
-SELECT2_CACHE_BACKEND = 'default'
-SELECT2_JS = ''
-SELECT2_CSS = ''
+
+# Configuración para pruebas de correo (Console Backend)
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#DEFAULT_FROM_EMAIL = 'ithenachito@gmail.com'
+
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587  
+EMAIL_USE_TLS = True  
+EMAIL_HOST_USER = 'sistemaunidadterritorialapp@gmail.com'
+EMAIL_HOST_PASSWORD = 'ueekslwyyxgfokfr'
+DEFAULT_FROM_EMAIL = 'sistemaunidadterritorialapp@gmail.com'  # Añadir esta línea
+EMAIL_DEBUG = True
