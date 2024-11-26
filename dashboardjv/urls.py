@@ -1,9 +1,13 @@
 from django.urls import path
-from .views import DashboardJuntaVecino, ListaVecinosView, CrearVecinoTitularView, EditarVecinoTitular, CrearVecinoMiembroView, EditarVecinoMiembroView, ListaMiembrosFamilia, ListaNoticias, CrearNoticia, EditarNoticia 
+from .views import DashboardJuntaVecino, ListaVecinosView, CrearVecinoTitularView, EditarVecinoTitular, CrearVecinoMiembroView, EditarVecinoMiembroView, ListaMiembrosFamilia, ListaNoticias, CrearNoticia, EditarNoticia, ListaCertificados, CrearCertificado, EditarCertificado
+from .utils import BuscarPerfil
 
 app_name = "dashboardjv"
 
 urlpatterns = [
+    # APIS
+    path('buscar-perfil/', BuscarPerfil.as_view(), name='buscar_perfil'),
+    
     # URLS
     path('dashboard/', DashboardJuntaVecino.as_view(), name='juntavecinos'),
     
@@ -18,6 +22,9 @@ urlpatterns = [
     path('noticias/editar/<int:id_noticia>/', EditarNoticia.as_view(), name='editarnoticia'),
     
     # Vecinos - Certificados de residencia
+    path('certificados/', ListaCertificados.as_view(), name='listacertificados'),
+    path('certificados/crear/', CrearCertificado.as_view(), name='crearcertificado'),
+    path('certificados/editar/<int:id_certificado>/', EditarCertificado.as_view(), name='editarcertificado'),
     
     # Vecinos - Familia
     path('vecinos/familia/<int:rut>/', ListaMiembrosFamilia.as_view(), name='lista_familia'),

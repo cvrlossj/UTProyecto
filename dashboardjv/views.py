@@ -19,11 +19,19 @@ from accounts.models import Perfiles, Familia, EstadoPerfil, Sexo, Parentesco, R
 # Modelos propios
 from django.db.models import Count
 from django.db.models import Q
-from .models import Noticias, EstadoNoticia
+from .models import Noticias, CertificadosResi, EstadoNoticia, EstadoCertificado
 # Email de Django
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+# pdf
+from django.utils.safestring import mark_safe
+from io import BytesIO
+from datetime import datetime
+from smtplib import SMTPException 
+from xhtml2pdf import pisa
+
+
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -672,8 +680,347 @@ class EditarNoticia(View):
         }
         return render(request, 'dashboardjv/editarnoticia.html', context)
         
-        
 #! ---- [Final de Noticias]
+
+
+#! ---- [Certificado de Residencia] ----
+@method_decorator(login_required, name='dispatch')
+class ListaCertificados(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        certificados = CertificadosResi.objects.filter(id_juntavecinos=junta)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'certificados': certificados,
+        }
+        return render(request, 'dashboardjv/certificados/listacertificados.html', context)
+
+
+@method_decorator(login_required, name='dispatch')
+class CrearCertificado(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        certificados = CertificadosResi.objects.filter(id_juntavecinos=junta)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'certificados': certificados,
+        }
+        return render(request, 'dashboardjv/certificados/crearcertificado.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        # Formulario
+        rut = request.POST.get('rut')
+        nombre = request.POST.get('nombre')
+        apellido = request.POST.get('apellido')
+        email = request.POST.get('email')
+        direccion = request.POST.get('direccion')
+
+        if not (rut and nombre and email and direccion):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('dashboardjv:crearcertificado')
+
+        try:
+            estado_certificado = get_object_or_404(EstadoCertificado, id_estadocertificado=2)
+
+            certificado = CertificadosResi.objects.create(
+                nombre_postulante=nombre,
+                direccion_postulante=direccion,
+                fecha_emision=datetime.now(),
+                id_juntavecinos=junta,
+                rut_postulante=get_object_or_404(Perfiles, rut=rut),
+                id_estadocertificado=estado_certificado
+            )
+
+            # HTML del certificado
+            html_content = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>Certificado de Residencia</title>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        font-size: 14px;
+                    }}
+                    .header {{
+                        text-align: center;
+                        background-color: #007bff;
+                        color: white;
+                        padding: 20px;
+                    }}
+                    .content {{
+                        margin: 20px;
+                    }}
+                    .footer {{
+                        text-align: center;
+                        font-size: 12px;
+                        margin-top: 20px;
+                        color: #6c757d;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>{junta.nombre_organizacion}</h1>
+                </div>
+                <div class="content">
+                    <p>A quien corresponda:</p>
+                    
+                    <p>Por medio del presente, la Junta de Vecinos <strong>{junta.nombre_organizacion}</strong> certifica que:</p>
+                    
+                    <p>El vecino <strong>{nombre} {apellido}</strong> con RUT <strong>{rut}</strong> con dirección domiciliaria en <strong>{direccion}</strong> reside en esta dirección que hace constancia en nuestros registros.</p>
+                    
+                    <p>Este certificado se emite en <strong>{junta.direccion}</strong> el día <strong>{certificado.fecha_emision.strftime("%d/%m/%Y")}</strong></p>
+                    
+                    <br>
+                    <p>Atentamente,</p>
+                    <p><strong>Junta de Vecinos {junta.nombre_organizacion}</strong></p>
+                </div>
+                <div class="footer">
+                    <p>Documento generado automáticamente por la Junta de Vecinos</p>
+                </div>
+            </body>
+            </html>
+            """
+
+            # Generar el PDF
+            pdf = BytesIO()
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf)
+
+            if pisa_status.err:
+                logger.error("Error al generar el PDF")
+                messages.error(request, "Hubo un error al generar el certificado.")
+                return redirect('dashboardjv:crearcertificado')
+
+            # Guardar una copia del contenido del PDF
+            pdf_content = pdf.getvalue()
+            pdf.close()
+
+            # Enviar el correo electrónico
+            try:
+                subject = "Certificado de Residencia"
+                message = f"""
+                Estimado/a {nombre} {apellido},
+
+                Adjunto encontrará su certificado de residencia solicitado a la Junta de Vecinos {junta.nombre_organizacion}.
+
+                Este es un correo automático, por favor no responder.
+
+                Saludos cordiales,
+                Junta de Vecinos {junta.nombre_organizacion}
+                """
+                
+                email_message = EmailMultiAlternatives(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email]
+                )
+                email_message.attach(
+                    f"certificado_{certificado.id_certificado}.pdf",
+                    pdf_content,
+                    "application/pdf"
+                )
+                email_message.send()
+                
+                messages.success(
+                    request, 
+                    mark_safe(
+                        f"Certificado #{certificado.id_certificado} generado y enviado correctamente al correo "
+                        f"<strong>{email}</strong>"
+                    )
+                )
+
+            except SMTPException as e:
+                logger.error(f"Error SMTP al enviar el correo: {str(e)}")
+                messages.error(
+                    request, 
+                    "Hubo un error al enviar el certificado por correo. Por favor, inténtelo nuevamente."
+                )
+                certificado.delete()
+                return redirect('dashboardjv:crearcertificado')
+                
+            except Exception as e:
+                logger.error(f"Error inesperado al enviar el correo: {str(e)}")
+                messages.error(
+                    request, 
+                    "Ocurrió un error inesperado. Por favor, inténtelo nuevamente."
+                )
+                certificado.delete()
+                return redirect('dashboardjv:crearcertificado')
+
+            return redirect('dashboardjv:listacertificados')
+
+        except Exception as e:
+            logger.exception("Error al crear el certificado:")
+            messages.error(request, f"Hubo un error al procesar el certificado: {str(e)}")
+            return redirect('dashboardjv:crearcertificado')
+
+
+@method_decorator(login_required, name='dispatch')
+class EditarCertificado(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        certificado = get_object_or_404(CertificadosResi, id_certificado=kwargs['id_certificado'], id_juntavecinos=junta)
+        estados = EstadoCertificado.objects.exclude(id_estadocertificado=2)
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'certificado': certificado,
+            'estados': estados,
+        }
+        return render(request, 'dashboardjv/certificados/editarcertificado.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        certificado = get_object_or_404(CertificadosResi, id_certificado=kwargs['id_certificado'], id_juntavecinos=junta)
+        
+        estado_id = request.POST.get('estado')
+        razon_rechazo = request.POST.get('nota', '')
+
+        if not estado_id:
+            messages.error(request, 'Debe seleccionar un estado para continuar.')
+            return redirect('dashboardjv:editarcertificado', id_certificado=certificado.id_certificado)
+
+        try:
+            nuevo_estado = get_object_or_404(EstadoCertificado, id_estadocertificado=estado_id)
+            certificado.id_estadocertificado = nuevo_estado
+            
+            certificado.fecha_emision = datetime.now().date()
+
+            if nuevo_estado.descripcion.lower() == 'aprobar':
+                estado_emitido = get_object_or_404(EstadoCertificado, id_estadocertificado=2)
+                certificado.id_estadocertificado = estado_emitido
+
+                html_content = f"""
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Certificado de Residencia</title>
+                    <style>
+                        body {{
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            font-size: 14px;
+                        }}
+                        .header {{
+                            text-align: center;
+                            background-color: #007bff;
+                            color: white;
+                            padding: 20px;
+                        }}
+                        .content {{
+                            margin: 20px;
+                        }}
+                        .footer {{
+                            text-align: center;
+                            font-size: 12px;
+                            margin-top: 20px;
+                            color: #6c757d;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>{junta.nombre_organizacion}</h1>
+                    </div>
+                    <div class="content">
+                        <p>A quien corresponda:</p>
+                        
+                        <p>Por medio del presente, la Junta de Vecinos <strong>{junta.nombre_organizacion}</strong> certifica que:</p>
+                        
+                        <p>El vecino <strong>{certificado.nombre_postulante} {certificado.rut_postulante.apellido}</strong> con RUT <strong>{certificado.rut_postulante.rut}</strong> con dirección domiciliaria en <strong>{certificado.direccion_postulante}</strong> reside en esta dirección que hace constancia en nuestros registros.</p>
+                        
+                        <p>Este certificado se emite en <strong>{junta.direccion}</strong> el día <strong>{datetime.now().strftime("%d/%m/%Y")}</strong></p>
+                        
+                        <br>
+                        <p>Atentamente,</p>
+                        <p><strong>Junta de Vecinos {junta.nombre_organizacion}</strong></p>
+                    </div>
+                    <div class="footer">
+                        <p>Documento generado automáticamente por la Junta de Vecinos</p>
+                    </div>
+                </body>
+                </html>
+                """
+
+                pdf = BytesIO()
+                pisa_status = pisa.CreatePDF(html_content, dest=pdf)
+
+                if pisa_status.err:
+                    logger.error("Error al generar el PDF")
+                    messages.error(request, "Hubo un error al generar el certificado.")
+                    return redirect('dashboardjv:editarcertificado', id_certificado=certificado.id_certificado)
+
+                pdf_content = pdf.getvalue()
+                pdf.close()
+
+                # Enviar el correo con el certificado aprobado
+                subject = "Certificado de Residencia Aprobado"
+                message = f"""
+                Estimado/a {certificado.nombre_postulante} {certificado.rut_postulante.apellido},
+
+                Su certificado de residencia ha sido aprobado. Adjunto encontrará el documento oficial.
+
+                Saludos cordiales,
+                Junta de Vecinos {junta.nombre_organizacion}
+                """
+                email_message = EmailMultiAlternatives(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [certificado.rut_postulante.correo_electronico]
+                )
+                email_message.attach(f"certificado_{certificado.id_certificado}.pdf", pdf_content, "application/pdf")
+                email_message.send()
+
+            elif nuevo_estado.descripcion.lower() == 'rechazar':
+                # Guardar la razón de rechazo
+                certificado.nota_estado = razon_rechazo
+
+                # Enviar correo de rechazo
+                subject = "Certificado de Residencia Rechazado"
+                message = f"""
+                Estimado/a {certificado.nombre_postulante} {certificado.rut_postulante.apellido},
+
+                Lamentamos informarle que su solicitud de certificado de residencia ha sido rechazada por la siguiente razón:
+
+                "{razon_rechazo}"
+
+                Para más información, puede contactar a la Junta de Vecinos {junta.nombre_organizacion}.
+                """
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [certificado.rut_postulante.correo_electronico]
+                )
+
+            certificado.save()
+            messages.success(request, f"El estado del certificado #{certificado.id_certificado} se actualizó correctamente.")
+            return redirect('dashboardjv:listacertificados')
+
+        except Exception as e:
+            logger.exception("Error al editar el certificado:")
+            messages.error(request, f"Hubo un error al editar el certificado: {str(e)}")
+            return redirect('dashboardjv:editarcertificado', id_certificado=certificado.id_certificado)
 
 
 #! ---- [Dashboard Junta de Vecinos] ----
@@ -686,7 +1033,6 @@ class DashboardJuntaVecino(TemplateView):
         user = self.request.user
         
 
-        # Obtener la junta asociada al perfil del usuario
         junta = JuntaVecinos.objects.filter(perfiles=user).first()
 
         context.update({

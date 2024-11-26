@@ -1,0 +1,125 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Editar Estado{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <style>
+        #suggestions {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        #suggestions .list-group-item:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+    </style>
+    <div class="container">
+        {% if messages %}
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+        {% endif %}
+    </div>
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <div class="mb-2">
+                        <h2 class="text-muted mb-3">Editar Certificado de Residencia</h2>
+                    </div> 
+                    <form method="post" id="addCertificado" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-2 position-relative">
+                                <label for="rut">Rut Postulante<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="rut" id="rut" value="{{ certificado.rut_postulante.rut }}" autocomplete="off" readonly>
+                            </div>
+                            <!-- Dv -->
+                            <div class="col-md-1">
+                                <label for="dv">Dv<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="dv" id="dv" value="{{ certificado.rut_postulante.dv }}" required readonly>
+                            </div>
+                            <!-- Nombre -->
+                            <div class="col-md-3">
+                                <label for="nombre">Nombre<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" value="{{ certificado.nombre_postulante }}" required readonly>
+                            </div>
+                            <!-- Apellido -->
+                            <div class="col-md-4">
+                                <label for="apellido">Apellido<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" value="{{ certificado.rut_postulante.apellido }}" required readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Email -->
+                            <div class="col-md-5">
+                                <label for="email">Email<span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="email" value="{{ certificado.rut_postulante.correo_electronico }}"required readonly>
+                            </div>
+                            <!-- Dirección -->
+                            <div class="col-md-5">
+                                <label for="direccion">Dirección<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccion" id="direccion" value="{{ certificado.direccion_postulante }}" required readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <!-- Estado -->
+                            <div class="col-md-2">
+                                <label for="estado">Estado Certificado<span class="text-danger">*</span></label>
+                                <select class="form-control" name="estado" id="estado" required>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for estado in estados %}
+                                        <option value="{{ estado.id_estadocertificado }}" 
+                                            {% if certificado.id_estadocertificado.id_estadocertificado == estado.id_estadocertificado %}selected{% endif %}>
+                                            {{ estado.descripcion }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Razón del rechazo -->
+                            <div class="col-md-8">
+                                <label for="nota">Razón del rechazo</label>
+                                <input type="text" class="form-control" name="nota" id="nota" disabled>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardjv:listacertificados" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Editar Certificado</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const estadoSelect = document.getElementById('estado');
+        const notaInput = document.getElementById('nota');
+        
+        estadoSelect.addEventListener('change', function () {
+            const selectedOption = estadoSelect.options[estadoSelect.selectedIndex].text.toLowerCase();
+            
+            if (selectedOption.includes('rechazar')) {
+                notaInput.disabled = false; // Habilita el campo
+                notaInput.setAttribute('required', 'required'); // Añade el atributo requerido
+            } else {
+                notaInput.disabled = true; // Deshabilita el campo
+                notaInput.removeAttribute('required'); // Elimina el atributo requerido
+                notaInput.value = ''; // Limpia el campo
+            }
+        });
+    });
+</script>
+{% endblock script %}

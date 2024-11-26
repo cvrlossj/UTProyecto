@@ -78,31 +78,31 @@
                                         <span class="badge text-bg-danger">inhabilitado</span>    
                                     {% endif %}
                                     <td>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <!-- Botón principal que despliega el dropdown -->
-                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Acciones
-                                        </button>
-                                        
-                                        <!-- Menú desplegable -->
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <!-- Opción para editar -->
-                                                <a class="dropdown-item edit-junta" href="{% url 'dashboardjv:editarvecino' vecino.rut %}"> 
-                                                    <i class="ri-edit-2-line"></i> Editar Vecino
-                                                </a>
-                                                {% if vecino.id_parentesco.descripcion == 'Titular' %}
-                                                    <a class="dropdown-item edit-junta" href="{% url 'dashboardjv:lista_familia' vecino.rut %}"> 
-                                                        <i class="ri-group-line"></i> Miembros de la familia
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Botón principal que despliega el dropdown -->
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            
+                                            <!-- Menú desplegable -->
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <!-- Opción para editar -->
+                                                    <a class="dropdown-item edit-junta" href="{% url 'dashboardjv:editarvecino' vecino.rut %}"> 
+                                                        <i class="ri-edit-2-line"></i> Editar Vecino
                                                     </a>
-                                                {% endif %}
-                                                {% comment %} <a class="dropdown-item edit-junta" href="{% url 'dashboarda:editar_juntavecinos' junta.id_juntavecino %}"> 
-                                                    <i class="ri-user-add-line"></i> Agregar miembro a la familia
-                                                </a> {% endcomment %}
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </td>
+                                                    {% if vecino.id_parentesco.descripcion == 'Titular' %}
+                                                        <a class="dropdown-item edit-junta" href="{% url 'dashboardjv:lista_familia' vecino.rut %}"> 
+                                                            <i class="ri-group-line"></i> Miembros de la familia
+                                                        </a>
+                                                    {% endif %}
+                                                    {% comment %} <a class="dropdown-item edit-junta" href="{% url 'dashboarda:editar_juntavecinos' junta.id_juntavecino %}"> 
+                                                        <i class="ri-user-add-line"></i> Agregar miembro a la familia
+                                                    </a> {% endcomment %}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
                                 </tr>
                             {% endfor %}
                             </tbody>

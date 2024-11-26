@@ -1,0 +1,97 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Crear Certificado{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <style>
+        #suggestions {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        #suggestions .list-group-item:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+    </style>
+    <div class="container">
+        {% if messages %}
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+        {% endif %}
+    </div>
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <div class="mb-2">
+                        <h2 class="text-muted mb-3">Crear un nuevo Certificado de Residencia</h2>
+                    </div> 
+                    <form method="post" id="addCertificado" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-2 position-relative">
+                                <label for="rut">Buscar Rut<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="rut" id="rut" placeholder="Ingresar el rut" autocomplete="off" required>
+                                <ul id="suggestions" class="list-group position-absolute" style="z-index: 1000; width: 100%; display: none;"></ul>
+                            </div>
+                            <!-- Dv -->
+                            <div class="col-md-1">
+                                <label for="dv">Dv<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="dv" id="dv" required readonly>
+                            </div>
+                            <!-- Nombre -->
+                            <div class="col-md-3">
+                                <label for="nombre">Nombre<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" required readonly>
+                            </div>
+                            <!-- Apellido -->
+                            <div class="col-md-3">
+                                <label for="apellido">Apellido<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" required readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Email -->
+                            <div class="col-md-5">
+                                <label for="email">Email<span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="email" required readonly>
+                            </div>
+                            <!-- Dirección -->
+                            <div class="col-md-4 mb-4">
+                                <label for="direccion">Dirección<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccion" id="direccion" required readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardjv:listacertificados" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Crear Certificado</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script>
+    flatpickr("#fecha_incorporacion", {
+        minDate: "today",
+        locale: "es",
+    });
+</script>
+
+<script src="{% static "dashboardjv/js/getPerfilesCertificado.js" %}"></script>
+
+{% endblock script %}
