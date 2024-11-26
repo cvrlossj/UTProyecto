@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Noticias, EstadoPostulacion, EstadoCertificado, EstadoNoticia, EstadoActividad, Actividad, PostulacionProyectos
+from .models import Noticias, CertificadosResi, PostulacionProyectos, Actividad, EstadoPostulacion, EstadoCertificado, EstadoNoticia, EstadoActividad
 
 
 
@@ -7,6 +7,11 @@ from .models import Noticias, EstadoPostulacion, EstadoCertificado, EstadoNotici
 class NoticiasAdmin(admin.ModelAdmin):
    list_display = ('id_noticia', 'nombre','fecha_inicio', 'fecha_termino')
    search_fields = ('nombre',)
+   
+@admin.register(CertificadosResi)
+class CertificadosResiAdmin(admin.ModelAdmin):
+   list_display = ('id_certificado', 'nombre_postulante','direccion_postulante', 'fecha_emision')
+   search_fields = ('nombre_postulante',)
 
 
 @admin.register(EstadoPostulacion)
