@@ -143,5 +143,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True  
 EMAIL_HOST_USER = 'sistemaunidadterritorialapp@gmail.com'
 EMAIL_HOST_PASSWORD = 'ueekslwyyxgfokfr'
-DEFAULT_FROM_EMAIL = 'sistemaunidadterritorialapp@gmail.com'  # Añadir esta línea
+DEFAULT_FROM_EMAIL = 'sistemaunidadterritorialapp@gmail.com'
 EMAIL_DEBUG = True

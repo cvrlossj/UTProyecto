@@ -198,6 +198,7 @@ class EditarPerfilVecinoView(View):
     def get(self, request, *args, **kwargs):
         rut = kwargs.get('rut')
         perfil = get_object_or_404(Perfiles, rut=rut)
+        junta = perfil.juntavecinos_set.first()
         sexos = Sexo.objects.all()
         regiones = Region.objects.all()
         estado_perfil = EstadoPerfil.objects.all()
@@ -215,6 +216,7 @@ class EditarPerfilVecinoView(View):
             'estados': estado_perfil,
             'fecha_nacimiento': fecha_nacimiento,
             'fecha_incorporacion': fecha_incorporacion,
+            'junta': junta
         }
         return render(request, 'dashboarda/editarperfil.html', context)
 
