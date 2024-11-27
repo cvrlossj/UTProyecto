@@ -83,7 +83,6 @@
                                             
                                             <!-- Menú desplegable -->
                                             <ul class="dropdown-menu">
-                                                <!-- Opción para editar -->
                                                 <li>
                                                     <a class="dropdown-item edit-junta" href="{% url 'dashboarda:editar_juntavecinos' junta.id_juntavecino %}"> 
                                                         <i class="ri-edit-2-line"></i> Editar Junta
@@ -92,6 +91,11 @@
                                                 <li>
                                                     <a class="dropdown-item" href="{% url "dashboarda:perfiles_junta" junta.id_juntavecino %}">
                                                         <i class="ri-admin-line"></i> Perfiles asociados
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url "dashboarda:perfiles_vecinos" junta.id_juntavecino %}">
+                                                        <i class="ri-user-heart-line"></i>  Vecinos asociados
                                                     </a>
                                                 </li>
                                             </ul>

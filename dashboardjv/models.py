@@ -27,7 +27,7 @@ class Actividad(models.Model):
   fecha_termino = models.DateField()
   horario_inicio = models.TimeField()
   horario_termino = models.TimeField()
-  id_estadoactividad = models.ForeignKey(EstadoNoticia, on_delete=models.CASCADE)
+  id_estadoactividad = models.ForeignKey(EstadoActividad, on_delete=models.CASCADE)
   id_juntavecinos = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
   
 class PostulacionProyectos(models.Model):

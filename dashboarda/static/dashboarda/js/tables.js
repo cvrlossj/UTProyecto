@@ -32,4 +32,5 @@ $(document).ready(function() {
     initDataTable('logsTableJuntaVecinos');
     initDataTable('logsTablePerfilesJunta'); 
     initDataTable('logsTablePerfiles'); 
+    initDataTable('logsTableVecinos'); 
 });

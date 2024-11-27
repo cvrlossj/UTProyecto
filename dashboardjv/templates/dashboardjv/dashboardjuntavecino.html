@@ -36,7 +36,7 @@
                             <span class="text-black d-flex align-items-center justify-content-center">
                                 <i class="ri-group-line"></i>
                             </span>
-                            <span class="text-black fw-bolder ms-2" id="total_juntas_count">{{total_juntas}}</span>
+                            <span class="text-black fw-bolder ms-2" id="total_vecinos_total">{{total_vecinos}}</span>
                         </h3>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
                             <span class="text-black d-flex align-items-center justify-content-center">
                                 <i class="ri-group-line"></i>
                             </span>
-                            <span class="text-black fw-bolder ms-2" id="habilitadas_juntas_count">{{habilitadas_juntas}}</span>
+                            <span class="text-black fw-bolder ms-2" id="total_vecinos_habilitadas">{{total_vecinos_habilitados}}</span>
                         </h3>
                     </div>
                 </div>
@@ -92,7 +92,7 @@
                             <span class="text-black d-flex align-items-center justify-content-center">
                                 <i class="ri-group-line"></i>
                             </span>
-                            <span class="text-black fw-bolder ms-2" id="inhabilitadas_juntas_count">{{inhabilitadas_juntas}}</span>
+                            <span class="text-black fw-bolder ms-2" id="total_vecinos_inhabilitadas">{{total_vecinos_inhabilitados}}</span>
                         </h3>
                     </div>
                 </div>
@@ -101,7 +101,6 @@
     </div>
 
     <div class="container">
-        <!-- Gráfico tendencia -->
         <div class="row">
             <div class="col-12">
                 <div class="card mb-4 border-1 rounded-2">
@@ -116,6 +115,79 @@
 {% endblock content %}
 
 {% block script %}
-
+<script src="{% static "dashboardjv/js/graficaComparativa.js" %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+        const selects = document.querySelectorAll(".filter-select");
+    
+        function showLoading(filterType) {
+            const countElement = document.getElementById(`total_vecinos_${filterType}`);
+            countElement.style.opacity = "0.5";
+        }
+    
+        function hideLoading(filterType) {
+            const countElement = document.getElementById(`total_vecinos_${filterType}`);
+            countElement.style.opacity = "1";
+        }
+    
+        function fetchData(url, filterType, filterValue) {
+            showLoading(filterType);
+    
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken,
+                },
+                body: JSON.stringify({
+                    filter_type: filterType,
+                    filter_value: filterValue !== "Filtrar" ? filterValue : null,
+                }),
+            })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                const countElement = document.getElementById(`total_vecinos_${filterType}`);
+                switch (filterType) {
+                    case "total":
+                        countElement.textContent = data.total_vecinos;
+                        break;
+                    case "habilitadas":
+                        countElement.textContent = data.total_vecinos_habilitados;
+                        break;
+                    case "inhabilitadas":
+                        countElement.textContent = data.total_vecinos_inhabilitados;
+                        break;
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                const countElement = document.getElementById(`total_vecinos_${filterType}`);
+                countElement.textContent = "Error";
+            })
+            .finally(() => {
+                hideLoading(filterType);
+            });
+        }
+    
+        selects.forEach((select) => {
+            select.addEventListener("change", function () {
+                const filterType = this.dataset.filterType;
+                const filterValue = this.value;
+    
+                const url = filterValue === "Filtrar"
+                    ? "/juntavecinos/dashboard/reset_data/"
+                    : "/juntavecinos/dashboard/filter_data/";
+    
+                fetchData(url, filterType, filterValue);
+            });
+        });
+    });
+</script>
 {% endblock script %}
 

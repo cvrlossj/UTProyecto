@@ -20,6 +20,9 @@ from django.contrib import messages
 
 
 
+def acceso_denegado(request):
+    return render(request, 'dashboarda/access_denied.html')
+
 
 def obtener_juntas_vecinos(request):
     juntas = JuntaVecinos.objects.all()
@@ -109,7 +112,7 @@ def juntas_chart_data(request):
         })
 
 
-@method_decorator(login_required, name='dispatch')  
+@method_decorator([login_required, role_required(1)], name='dispatch')
 class PerfilesVecinosView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -442,6 +445,26 @@ class PerfilesJuntaVecino(View):
             'perfiles_habilitados': perfiles_habilitados,
             'perfiles_inhabilitados': perfiles_inhabilitados
         })
+        
+        
+@method_decorator([login_required, role_required(1)], name='dispatch')
+class VecinosJuntaVecino(View):
+    def get(self, request, id_juntavecino, *args, **kwargs):
+        junta = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
+
+        vecinos = junta.perfiles.filter(id_rol=3)
+        
+        vecinos_habilitados = vecinos.filter(id_estadoperfil=1).count()
+        vecinos_inhabilitados = vecinos.filter(id_estadoperfil=2).count()
+        
+        return render(request, 'dashboarda/vecinosjuntavecino.html', {
+            'junta': junta,
+            'vecinos': vecinos,
+            'vecinos_habilitados': vecinos_habilitados,
+            'vecinos_inhabilitados': vecinos_inhabilitados
+        })
+
+        
         
 @csrf_exempt
 def filter_data(request):

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+import json
 # Vistas Genericas
 from django.views.generic import TemplateView, View
 # Utilidades
@@ -12,6 +13,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
+from dashboarda.utils import role_required
 # Modelos de dashboarda
 from dashboarda.models import JuntaVecinos
 # Modelos de accounts
@@ -32,12 +34,13 @@ from smtplib import SMTPException
 from xhtml2pdf import pisa
 
 
-
 # Configurar logging
 logger = logging.getLogger(__name__)
 
+
+
 #! ---- [Vecinos] ----
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class ListaVecinosView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -53,7 +56,7 @@ class ListaVecinosView(View):
         return render(request, 'dashboardjv/listavecinos.html', context)
         
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class CrearVecinoTitularView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -150,7 +153,7 @@ class CrearVecinoTitularView(View):
             return redirect('dashboardjv:crearvecino')
         
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class EditarVecinoTitular(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -215,7 +218,7 @@ class EditarVecinoTitular(View):
             return redirect('dashboardjv:editarvecino', rut=rut)
 
 # ! ---- [Lista Miembros de una Familia] ----
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class ListaMiembrosFamilia(View):
     def get(self, request, rut, *args, **kwargs):
         try:
@@ -324,7 +327,7 @@ class CrearVecinoMiembroView(View):
             return redirect('dashboardjv:crear_miembro_familia', rut=titular_rut)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class EditarVecinoMiembroView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -422,7 +425,7 @@ class EditarVecinoMiembroView(View):
 # ! ---- [Final de Familia] ----
         
 #! ---- [Noticias] ----
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class ListaNoticias(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -436,7 +439,7 @@ class ListaNoticias(View):
         }
         return render(request, 'dashboardjv/listanoticias.html', context)
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class CrearNoticia(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -554,7 +557,7 @@ class CrearNoticia(View):
 
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class EditarNoticia(View):
     def get(self, request, id_noticia, *args, **kwargs):
         user = request.user
@@ -684,7 +687,7 @@ class EditarNoticia(View):
 
 
 #! ---- [Certificado de Residencia] ----
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class ListaCertificados(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -699,7 +702,7 @@ class ListaCertificados(View):
         return render(request, 'dashboardjv/certificados/listacertificados.html', context)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class CrearCertificado(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -869,7 +872,7 @@ class CrearCertificado(View):
             return redirect('dashboardjv:crearcertificado')
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class EditarCertificado(View):
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -1023,21 +1026,171 @@ class EditarCertificado(View):
             return redirect('dashboardjv:editarcertificado', id_certificado=certificado.id_certificado)
 
 
+
+
+@csrf_exempt
+@login_required
+def vecinos_chart_data(request):
+    if request.method == 'GET':
+        try:
+            # Obtener la junta de vecinos asociada al usuario actual
+            user = request.user
+            try:
+                junta = JuntaVecinos.objects.get(perfiles=user)
+            except JuntaVecinos.DoesNotExist:
+                return JsonResponse({'error': 'No estás asociado a ninguna junta de vecinos.'}, status=400)
+
+            today = datetime.now().date()
+            # Obtener primer día del mes actual
+            first_day = today.replace(day=1)
+            # Obtener último día del mes
+            if today.month == 12:
+                last_day = today.replace(day=31)
+            else:
+                last_day = (today.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+            # Generar datos para cada día del mes
+            labels = []
+            integrados_count = []
+            inhabilitados_count = []
+
+            current_day = first_day
+            while current_day <= last_day:
+                labels.append(current_day.strftime('%d/%m'))
+
+                # Contar vecinos integrados por día
+                integrados = junta.perfiles.filter(id_rol=3, fecha_incorporacion=current_day).count()
+                integrados_count.append(integrados)
+
+                # Contar vecinos inhabilitados por día
+                inhabilitados = junta.perfiles.filter(id_rol=3, fecha_termino=current_day).count()
+                inhabilitados_count.append(inhabilitados)
+
+                current_day += timedelta(days=1)
+
+            return JsonResponse({
+                'labels': labels,
+                'integrados': integrados_count,
+                'inhabilitados': inhabilitados_count
+            })
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+
+@csrf_exempt
+@login_required
+def filter_data(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            filter_type = data.get('filter_type')
+            filter_value = data.get('filter_value')
+
+            # Obtener la junta de vecinos asociada al usuario actual
+            user = request.user
+            try:
+                junta = JuntaVecinos.objects.get(perfiles=user)
+            except JuntaVecinos.DoesNotExist:
+                return JsonResponse({'error': 'No estás asociado a ninguna junta de vecinos.'}, status=400)
+
+            # Inicializamos los valores en 0
+            total_vecinos = 0
+            total_vecinos_habilitados = 0
+            total_vecinos_inhabilitados = 0
+
+            # Crear filtros de fecha según el filtro proporcionado
+            if filter_value == 'today':
+                date_filter = datetime.now().date()
+                date_query = Q(fecha_incorporacion=date_filter)
+            elif filter_value == 'week':
+                week_start = datetime.now() - timedelta(days=datetime.now().weekday())
+                date_query = Q(fecha_incorporacion__gte=week_start)
+            elif filter_value == 'month':
+                month_start = datetime.now().replace(day=1)
+                date_query = Q(fecha_incorporacion__gte=month_start)
+            elif filter_value == 'year':
+                year_start = datetime.now().replace(month=1, day=1)
+                date_query = Q(fecha_incorporacion__gte=year_start)
+            else:
+                date_query = Q()
+
+            # Aplicar filtros según el tipo
+            if filter_type == 'total':
+                total_vecinos = junta.perfiles.filter(Q(id_rol=3) & date_query).count()
+            elif filter_type == 'habilitadas':
+                total_vecinos_habilitados = junta.perfiles.filter(Q(id_rol=3, id_estadoperfil=1) & date_query).count()
+            elif filter_type == 'inhabilitadas':
+                total_vecinos_inhabilitados = junta.perfiles.filter(Q(id_rol=3, id_estadoperfil=2) & date_query).count()
+
+
+            # Respuesta JSON con los datos filtrados
+            return JsonResponse({
+                'total_vecinos': total_vecinos,
+                'total_vecinos_habilitados': total_vecinos_habilitados,
+                'total_vecinos_inhabilitados': total_vecinos_inhabilitados
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Método de solicitud inválido.'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def reset_data(request):
+    if request.method == 'POST':
+        try:
+            # Obtener la junta de vecinos asociada al usuario actual
+            user = request.user
+            try:
+                junta = JuntaVecinos.objects.get(perfiles=user)
+            except JuntaVecinos.DoesNotExist:
+                return JsonResponse({'error': 'No estás asociado a ninguna junta de vecinos.'}, status=400)
+
+            # Obtener totales para la junta específica
+            total_vecinos = junta.perfiles.filter(id_rol=3).count()
+            habilitados_vecinos = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+            inhabilitados_vecinos = junta.perfiles.filter(id_rol=3, id_estadoperfil=2).count()
+
+            # Respuesta JSON
+            return JsonResponse({
+                'total_vecinos': total_vecinos,
+                'habilitados_vecinos': habilitados_vecinos,
+                'inhabilitados_vecinos': inhabilitados_vecinos
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
 #! ---- [Dashboard Junta de Vecinos] ----
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(2)], name='dispatch')
 class DashboardJuntaVecino(TemplateView):
     template_name = "dashboardjv/dashboardjuntavecino.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
         
+        total_vecinos = junta.perfiles.filter(id_rol=3).count()
+        total_vecinos_habilitados = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+        total_vecinos_inhabilitados = junta.perfiles.filter(id_rol=3, id_estadoperfil=2).count()
 
-        junta = JuntaVecinos.objects.filter(perfiles=user).first()
 
         context.update({
             'user': user,
             'junta': junta,
+            'total_vecinos' : total_vecinos,
+            'total_vecinos_habilitados' : total_vecinos_habilitados,
+            'total_vecinos_inhabilitados' : total_vecinos_inhabilitados,
         })
         return context
     

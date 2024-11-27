@@ -1,6 +1,9 @@
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 import requests
+
+
 
 def obtener_coordenadas(direccion, comuna, region):
     # Crear una query más detallada
@@ -47,7 +50,8 @@ def role_required(role_id):
     def decorator(view_func):
         def _wrapped_view(request, *args, **kwargs):
             if request.user.id_rol_id != role_id:
-                raise PermissionDenied  # Lanza un error 403
+                # Redirige a la página de acceso denegado
+                return redirect(reverse('dashboarda:acceso_denegado'))
             # Si pasa las validaciones, llama a la vista
             return view_func(request, *args, **kwargs)
         return _wrapped_view
