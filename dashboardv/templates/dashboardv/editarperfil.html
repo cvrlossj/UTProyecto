@@ -1,0 +1,145 @@
+{% extends "dashboardv/basevecino.html" %}
+{% load static %}
+
+{% block title %}Editar mi Perfil{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <div class="mb-2">
+                        <h2 class="text-muted mb-3">Editar mi Perfil</h2>
+                    </div> 
+                
+                    <form method="post" id="editProfile" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <!-- Rut -->
+                            <div class="col-md-2">
+                                <label for="rut">Rut<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="rut" id="rut" value="{{user.rut}}" required disabled>
+                            </div>
+                            <!-- Dv -->
+                            <div class="col-md-2">
+                                <label for="dv">Dv<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="dv" id="dv" value="{{user.dv}}" required disabled>
+                            </div>
+                            <!-- Nombre -->
+                            <div class="col-md-3">
+                                <label for="nombre">Nombre<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" value="{{user.nombre}}" required disabled>
+                            </div>
+                            <!-- Apellido -->
+                            <div class="col-md-3">
+                                <label for="apellido">Apellido<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" value="{{user.apellido}}" required disabled>
+                            </div>
+                            <!-- Fecha Nacimiento -->
+                            <div class="col-md-2">
+                                <label for="fecha_nacimiento">Fecha nacimiento<span class="text-danger">*</span></label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento" value="{{user.fecha_nacimiento|date:'Y-m-d'}}" required disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Sexo -->
+                            <div class="col-md-2">
+                                <label for="sexo">Sexo<span class="text-danger">*</span></label>
+                                <select class="form-control" name="sexo" id="sexo" required disabled>
+                                    <option value="" disabled>Seleccione una opción</option>
+                                    {% for sexo in sexos %}
+                                        <option value="{{ sexo.id_sexo }}" {% if sexo.id_sexo == user.id_sexo.id_sexo %}selected{% endif %}>
+                                            {{ sexo.descripcion }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Parentesco -->
+                            <div class="col-md-2">
+                                <label for="parentesco">Parentesco<span class="text-danger">*</span></label>
+                                <select class="form-control" name="parentesco" id="parentesco" required disabled>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for parentesco in parentescos %}
+                                        <option value="{{ parentesco.id_parentesco }}" {% if parentesco.id_parentesco == user.id_parentesco.id_parentesco %}selected{% endif %}>
+                                            {{ parentesco.descripcion }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Número contacto -->
+                            <div class="col-md-2">
+                                <label for="numero_contacto">Número de contacto<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="numero_contacto" id="numero_contacto" value="{{user.numero_contacto}}" placeholder="número de contacto" required>
+                            </div>
+                            <!-- Email -->
+                            <div class="col-md-3">
+                                <label for="email">Email<span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="email" value="{{user.correo_electronico}}" placeholder="Ingresar el email" required>
+                            </div>
+                            <!-- Fecha incorporación -->
+                            <div class="col-md-2">
+                                <label for="fecha_incorporacion">Fecha incorporación<span class="text-danger">*</span></label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fecha_incorporacion" id="fecha_incorporacion" value="{{user.fecha_incorporacion|date:'Y-m-d'}}" placeholder="yyyy/mm/dd" required disabled>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Dirección -->
+                            <div class="col-md-4 mb-4">
+                                <label for="direccion">Dirección<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccion" id="direccion"  value="{{user.direccion}}" required disabled>
+                            </div>
+                            <!-- Contraseña -->
+                            <div class="col-md-4 mb-4">
+                                <label for="contrasena">Cambiar la Contraseña</label>
+                                <input type="text" class="form-control" name="contrasena" id="contrasena" placeholder="Crear contraseña nueva">
+                            </div>
+                            
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardv:dashboardvecino" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Actualizar mi perfil</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+
+<script>
+    flatpickr("#fecha_incorporacion", {
+        minDate: "today",
+        locale: "es",
+    });
+    flatpickr("#fecha_nacimiento", {
+        locale: "es",
+    });
+    flatpickr("#fecha_termino", {
+        locale: "es",
+    });
+</script>
+{% endblock script %}

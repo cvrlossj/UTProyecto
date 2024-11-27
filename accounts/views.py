@@ -4,6 +4,7 @@ from django.contrib.auth.views import LoginView
 from .models import Perfiles
 from django.contrib.auth import logout
 from django.views.generic import View
+from django.contrib import messages
 
 # Esto es una vista personalizada de Incio de Sesión
 class CustomLoginView(LoginView):
@@ -18,7 +19,7 @@ class CustomLoginView(LoginView):
         elif user.id_rol.descripcion == "Junta Vecinos":
             return reverse('dashboardjv:juntavecinos')
         elif user.id_rol.descripcion == "Vecino":
-            pass
+            return reverse('dashboardv:dashboardvecino')
         
         return reverse('accounts:login')
     
