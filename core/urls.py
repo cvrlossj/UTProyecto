@@ -9,4 +9,7 @@ urlpatterns = [
     path('superadmin/', include('dashboarda.urls')),
     # Dashboard Junta de Vecinos
     path('juntavecinos/', include('dashboardjv.urls')),
+    # Dashboard Vecino
+    path('vecino/', include('dashboardv.urls')),
+    
 ]
