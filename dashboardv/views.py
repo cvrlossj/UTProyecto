@@ -10,10 +10,10 @@ from django.contrib import messages
 # Modelos Propios
 from accounts.models import Perfiles, Sexo, Parentesco
 from dashboardjv.models import JuntaVecinos, CertificadosResi, EstadoCertificado
+from dashboarda.utils import role_required
 
 
-# Editar Perfil
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(3)], name='dispatch')
 class EditarPerfil(View):
      def get(self, request, *args, **kwargs):
           user = self.request.user
@@ -34,7 +34,6 @@ class EditarPerfil(View):
      def post(self, request, *args, **kwargs):
           user = request.user
           vecino = get_object_or_404(Perfiles, rut=user.rut)
-          # Obtenemos los datos del formulario
           numero_contacto = request.POST.get('numero_contacto')
           email = request.POST.get('email')
           contrasena = request.POST.get('contrasena')
@@ -59,7 +58,7 @@ class EditarPerfil(View):
 
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(3)], name='dispatch')
 class ListaCertificados(View):
     def get(self, request, *args, **kwargs):
           user = request.user
@@ -88,7 +87,7 @@ class ListaCertificados(View):
           return render(request, 'dashboardv/certificados/listacertificados.html', context)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(3)], name='dispatch')
 class SolicitarCertificadoResidencia(View):
      def get(self, request, *args, **kwargs):
           """
@@ -96,7 +95,6 @@ class SolicitarCertificadoResidencia(View):
           """
           user = request.user
 
-          # Obtener la junta de vecinos del usuario
           junta = get_object_or_404(JuntaVecinos, perfiles=user)
 
           context = {
@@ -112,7 +110,6 @@ class SolicitarCertificadoResidencia(View):
           user = request.user
           junta = get_object_or_404(JuntaVecinos, perfiles=user)
 
-          # Recuperar datos del formulario
           rut = request.POST.get('rut', '').strip()
           nombre = request.POST.get('nombre', '').strip()
           apellido = request.POST.get('apellido', '').strip()
@@ -125,10 +122,8 @@ class SolicitarCertificadoResidencia(View):
                return redirect('dashboardv:crearcertificado')
 
           try:
-               # Obtener el estado inicial del certificado
                estado_certificado = get_object_or_404(EstadoCertificado, id_estadocertificado=1)
 
-               # Crear el certificado
                CertificadosResi.objects.create(
                     id_juntavecinos=junta,
                     nombre_postulante=nombre,
@@ -137,20 +132,46 @@ class SolicitarCertificadoResidencia(View):
                     id_estadocertificado=estado_certificado
                )
 
-               # Mensaje de éxito
                messages.success(request, 'Certificado creado con éxito.')
                return redirect('dashboardv:listacertificados')
 
           except Exception as e:
-               # Mensaje de error si ocurre algún problema
                messages.error(request, f"Hubo un error al procesar el certificado: {str(e)}")
                return redirect('dashboardv:crearcertificado')
+
+
+@method_decorator([login_required, role_required(3)], name='dispatch')
+class ListaFamilia(View):
+    def get(self, request, *args, **kwargs):
+          user = request.user
+
+          # Obtener la junta de vecinos del usuario
+          junta = get_object_or_404(JuntaVecinos, perfiles=user)
+
+          # Obtener el titular y miembros de la familia
+          titular = user  # Asumimos que `user` es el titular de la familia
+          miembros = Perfiles.objects.filter(familia=user.familia) if user.familia else []
+
+          # Filtrar certificados de residencia
+          certificados = CertificadosResi.objects.filter(
+               id_juntavecinos=junta,
+               rut_postulante__in=miembros.values_list('rut', flat=True) if miembros else [user.rut]
+          )
+
+          context = {
+               'user': user,
+               'junta': junta,
+               'certificados': certificados,
+               'miembros': miembros,  # Lista de miembros de la familia
+               'titular': titular,    # Información del titular
+          }
+          return render(request, 'dashboardv/listamiembrosfamilia.html', context)
 
 
 
 
 # ! Dashboard
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required(3)], name='dispatch')
 class DashboardVecino(TemplateView):
      template_name = 'dashboardv/dashboardv.html'
 

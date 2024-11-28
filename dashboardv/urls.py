@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import DashboardVecino, EditarPerfil, ListaCertificados, SolicitarCertificadoResidencia
+from .views import DashboardVecino, EditarPerfil, ListaFamilia, ListaCertificados, SolicitarCertificadoResidencia
 from .utils import BuscarMiembroPerfil
 
 
@@ -14,6 +14,9 @@ urlpatterns = [
     
     # Editar Perfil
     path('editarperfil/', EditarPerfil.as_view(), name='editarperfilvecino'),
+    
+    # Miembros de la familia
+    path('miembros/', ListaFamilia.as_view(), name='listafamilia'),
     
     # Certificados de Residencia
     path('certificados/', ListaCertificados.as_view(), name='listacertificados'),

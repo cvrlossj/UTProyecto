@@ -34,7 +34,7 @@
         <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top border-bottom border-2">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" href="#">
-                    <img src="{% static 'dashboarda/img/icon.png' %}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top">
+                    <img src="{% static 'dashboarv/img/icon.png' %}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top">
                     <span class="ms-2">{{ APP_NAME_L }}</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@
                                 <i class="ri-user-heart-line"></i> Familia
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="tiktokDropdown">
-                                <li><a class="dropdown-item" href="#"><i class="ri-team-line"></i> Mi familia</a></li>
+                                <li><a class="dropdown-item" href="{% url "dashboardv:listafamilia" %}"><i class="ri-team-line"></i> Mi familia</a></li>
                             </ul>
                         </li> 
                         {% comment %} <li class="nav-item dropdown">
