@@ -37,6 +37,7 @@
                         <table id="logsCertificados" class="table table-hover table-striped">
                             <thead>
                                 <tr>
+                                    <th scope="col">#</th>
                                     <th scope="col">RUT</th>
                                     <th scope="col">Nombre Postulante</th>
                                     <th scope="col">Dirección</th>
@@ -50,6 +51,7 @@
                             {% comment %} Contenido aquí {% endcomment %}
                             {% for certificado in certificados %}
                                 <tr>
+                                    <td>{{ certificado.id_certificado }}</td>
                                     <td>{{ certificado.rut_postulante.rut }}</td>
                                     <td>{{ certificado.nombre_postulante }}</td>
                                     <td>{{ certificado.direccion_postulante }}</td>

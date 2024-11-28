@@ -232,10 +232,10 @@ class ListaMiembrosFamilia(View):
                 return redirect('dashboardjv:listavecinos')
             
             # Obtener todos los vecinos asociados a esta familia
-            miembros = familia.miembros.exclude(id_parentesco = 1)
-            miembros_contar = familia.miembros.exclude(id_parentesco = 1).count()
+            miembros = familia.miembros.all()
+            miembros_contar = familia.miembros.all().count()
             
-            context = {
+            context = { 
                 'titular': titular,
                 'familia': familia,
                 'miembros': miembros,
@@ -354,7 +354,11 @@ class EditarVecinoMiembroView(View):
         
         # Obtener sexos y parentescos
         sexos = Sexo.objects.all()
-        parentescos = Parentesco.objects.exclude(id_parentesco=1)
+        
+        if vecino.id_parentesco.descripcion == "Titular":
+            parentescos = Parentesco.objects.filter(id_parentesco=1)
+        else:
+            parentescos = Parentesco.objects.exclude(id_parentesco=1)
         
         context = {
             'user': user,

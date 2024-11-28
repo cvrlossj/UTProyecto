@@ -1,6 +1,6 @@
 function initDataTable(tableId) {
     $('#' + tableId).DataTable({
-        "order": [[0, "asc"]],
+        "order": [[0, "desc"]], // Cambiado a la primera columna (índice 0) y orden descendente
         "paging": true,
         "select": true,
         "lengthChange": true,

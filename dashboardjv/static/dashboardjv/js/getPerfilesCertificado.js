@@ -39,5 +39,23 @@ document.getElementById('rut').addEventListener('input', function () {
             });
     } else {
         suggestionsBox.style.display = 'none';
+        // Limpiar todos los campos cuando el RUT está vacío
+        limpiarCampos();
     }
 });
+
+// Agregar evento change para limpiar los campos cuando se borre el RUT
+document.getElementById('rut').addEventListener('change', function() {
+    if (this.value === '') {
+        limpiarCampos();
+    }
+});
+
+// Función para limpiar todos los campos
+function limpiarCampos() {
+    document.getElementById('dv').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('apellido').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('direccion').value = '';
+}
