@@ -364,7 +364,7 @@ class EditarJuntaVecinosView(View):
         return render(request, 'dashboarda/editarjuntavecino.html', context)
     
     def post(self, request, id_juntavecino, *args, **kwargs):
-        junta_vecinos = get_object_or_404(JuntaVecinos, id=id_juntavecino)
+        junta_vecinos = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
         
         try:
             nombre_organizacion = request.POST.get('nombreOrganizacion')

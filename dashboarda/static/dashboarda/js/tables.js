@@ -1,6 +1,6 @@
 function initDataTable(tableId) {
     $('#' + tableId).DataTable({
-        "order": [[0, "asc"]],
+        "order": [[0, "desc"]],
         "paging": true,
         "select": true,
         "lengthChange": true,
@@ -8,13 +8,13 @@ function initDataTable(tableId) {
         "searching": true,
         "ordering": true,
         "info": true,
-        "autoWidth": true,
+        "autoWidth": false,
         "responsive": true,
         "language": {
             "emptyTable": "No hay datos disponibles en la tabla",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
             "infoEmpty": "Mostrando 0 a 0 de 0 registros",
-            "infoFiltered": "(filtered from _MAX_ total entries)",
+            "infoFiltered": "(filtrado de _MAX_ registros totales)",
             "lengthMenu": "Mostrar _MENU_ registros",
             "search": "Buscar:",
             "zeroRecords": "No se encontraron registros coincidentes",
@@ -27,6 +27,7 @@ function initDataTable(tableId) {
         }
     });
 }
+
 
 $(document).ready(function() {
     initDataTable('logsTableJuntaVecinos');
