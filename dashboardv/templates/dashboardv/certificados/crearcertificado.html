@@ -1,0 +1,152 @@
+{% extends "dashboardjv/basedashjv.html" %}
+{% load static %}
+
+{% block title %}Solicitar Certificado{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <style>
+        #suggestions {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        #suggestions .list-group-item:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+    </style>
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h2 class="text-muted mb-3">Solicitar un nuevo Certificado de Residencia</h2>
+                    <form method="post" id="addCertificado" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-3 position-relative">
+                                <label for="rut">Buscar RUT del Titular<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="rut" id="rut" placeholder="Ingresar el RUT del titular" autocomplete="off" required>
+                                <ul id="suggestions" class="list-group position-absolute" style="z-index: 1000; width: 100%; display: none;"></ul>
+                            </div>
+                            <!-- Dv -->
+                            <div class="col-md-1">
+                                <label for="dv">Dv<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="dv" id="dv" required readonly>
+                            </div>
+                            <!-- Nombre -->
+                            <div class="col-md-3">
+                                <label for="nombre">Nombre<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" required readonly>
+                            </div>
+                            <!-- Apellido -->
+                            <div class="col-md-3">
+                                <label for="apellido">Apellido<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" required readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- Email -->
+                            <div class="col-md-5">
+                                <label for="email">Email<span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="email" required readonly>
+                            </div>
+                            <!-- Dirección -->
+                            <div class="col-md-4 mb-4">
+                                <label for="direccion">Dirección<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="direccion" id="direccion" required readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-start">
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardv:listacertificados" %}">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Solicitar Certificado</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script>
+    flatpickr("#fecha_incorporacion", {
+        minDate: "today",
+        locale: "es",
+    });
+</script>
+<script>
+    document.getElementById('rut').addEventListener('input', function () {
+        const rut = this.value;
+        const suggestionsBox = document.getElementById('suggestions');
+        
+        // Modificamos esta condición para que muestre sugerencias con al menos 1 dígito
+        if (rut.length > 0) {  // Cambiado de "rut.length > 0" a "rut.length >= 1"
+            fetch(`/vecino/buscar-miembros/?rut=${rut}`)
+                .then(response => response.json())
+                .then(data => {
+                    suggestionsBox.innerHTML = '';
+                    
+                    if (data.success) {
+                        suggestionsBox.style.display = 'block';
+                        data.miembros.forEach(miembro => {
+                            const li = document.createElement('li');
+                            li.classList.add('list-group-item', 'list-group-item-action');
+                            li.textContent = `${miembro.rut}-${miembro.dv} (${miembro.nombre} ${miembro.apellido})`;
+                            li.addEventListener('click', () => {
+                                document.getElementById('rut').value = miembro.rut;
+                                document.getElementById('dv').value = miembro.dv;
+                                document.getElementById('nombre').value = miembro.nombre;
+                                document.getElementById('apellido').value = miembro.apellido;
+                                document.getElementById('email').value = miembro.correo_electronico;
+                                document.getElementById('direccion').value = miembro.direccion;
+                                suggestionsBox.style.display = 'none';
+                            });
+                            suggestionsBox.appendChild(li);
+                        });
+                    } else {
+                        suggestionsBox.style.display = 'block';
+                        const li = document.createElement('li');
+                        li.classList.add('list-group-item', 'list-group-item-danger');
+                        li.textContent = 'No se encontraron miembros de la familia';
+                        suggestionsBox.appendChild(li);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        } else {
+            suggestionsBox.style.display = 'none';
+            document.getElementById('dv').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('apellido').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('direccion').value = '';
+        }
+    });
+    
+    document.getElementById('rut').addEventListener('change', function() {
+        if (this.value === '') {
+            document.getElementById('dv').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('apellido').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('direccion').value = '';
+        }
+    });
+</script>
+{% endblock script %}

@@ -11,6 +11,7 @@
             <h5 class="text-muted">
                 Perteneces a la Junta de Vecinos de : <span class="text-black">{{ junta.nombre_organizacion }}</span>
             </h5>
+            <p class="text-muted">RUT: {{request.user.rut}}</p>
         </div> 
 
         <div class="row">
@@ -19,24 +20,13 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-black">Total Vecinos</span>
-                            <select class="form-select form-select-sm filter-select" 
-                                    data-filter-type="total" 
-                                    id="filter-total" 
-                                    style="background-color:#F5F6F8; width: auto;" 
-                                    aria-label="Filtrar por">
-                                <option selected>Filtrar</option>
-                                <option value="today">Hoy</option>
-                                <option value="week">Esta semana</option>
-                                <option value="month">Este mes</option>
-                                <option value="year">Este año</option>
-                            </select>
+                            <span class="text-black">Total Miembros de mi familia</span>
                         </div>
                         <h3 class="card-title text-black d-flex align-items-center mt-2">
                             <span class="text-black d-flex align-items-center justify-content-center">
                                 <i class="ri-group-line"></i>
                             </span>
-                            <span class="text-black fw-bolder ms-2" id="total_juntas_count">0</span>
+                            <span class="text-black fw-bolder ms-2">{{miembros_total}}</span>
                         </h3>
                     </div>
                 </div>
@@ -47,24 +37,13 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-black">Total Vecinos <span class="badge text-bg-success">habilitadas</span></span>
-                            <select class="form-select form-select-sm filter-select" 
-                                    data-filter-type="habilitadas" 
-                                    id="filter-habilitadas" 
-                                    style="background-color:#F5F6F8; width: auto;" 
-                                    aria-label="Filtrar por">
-                                <option selected>Filtrar</option>
-                                <option value="today">Hoy</option>
-                                <option value="week">Esta semana</option>
-                                <option value="month">Este mes</option>
-                                <option value="year">Este año</option>
-                            </select>
+                            <span class="text-black">Total Miembros de mi familia <span class="badge text-bg-success">habilitados</span></span>
                         </div>
                         <h3 class="card-title text-black d-flex align-items-center mt-2">
                             <span class="text-black d-flex align-items-center justify-content-center">
                                 <i class="ri-group-line"></i>
                             </span>
-                            <span class="text-black fw-bolder ms-2" id="habilitadas_juntas_count">0</span>
+                            <span class="text-black fw-bolder ms-2">{{miembros_contar_habilitar}}</span>
                         </h3>
                     </div>
                 </div>
@@ -75,24 +54,13 @@
                 <div class="card mb-4 border-1 rounded-2">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-black">Total Vecinos <span class="badge text-bg-danger">inhabilitadas</span></span>
-                            <select class="form-select form-select-sm filter-select" 
-                                    data-filter-type="inhabilitadas" 
-                                    id="filter-inhabilitadas" 
-                                    style="background-color:#F5F6F8; width: auto;" 
-                                    aria-label="Filtrar por">
-                                <option selected>Filtrar</option>
-                                <option value="today">Hoy</option>
-                                <option value="week">Esta semana</option>
-                                <option value="month">Este mes</option>
-                                <option value="year">Este año</option>
-                            </select>
+                            <span class="text-black">Total Miembros de mi familia  <span class="badge text-bg-danger">inhabilitados</span></span>
                         </div>
                         <h3 class="card-title text-black d-flex align-items-center mt-2">
                             <span class="text-black d-flex align-items-center justify-content-center">
                                 <i class="ri-group-line"></i>
                             </span>
-                            <span class="text-black fw-bolder ms-2" id="inhabilitadas_juntas_count">0</span>
+                            <span class="text-black fw-bolder ms-2">{{miembros_contar_inhabilitar}}</span>
                         </h3>
                     </div>
                 </div>
@@ -100,17 +68,4 @@
         </div>
     </div>
 
-    <div class="container">
-        <!-- Gráfico tendencia -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card mb-4 border-1 rounded-2">
-                    <div class="card-body py-4 my-1">
-                        <span class="text-black fs-5 ms-4">Comparación de Vecinos Integrados vs. Inhabilitados</span>
-                        <canvas id="chartCanvas"></canvas> <!-- Contenedor del gráfico -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock content %}
