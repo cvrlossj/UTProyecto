@@ -37,6 +37,7 @@
                         <table id="logsTableVecinos" class="table table-hover table-striped table-sm">
                             <thead>
                                 <tr>
+                                    <th scope="col">#</th>
                                     <th scope="col">RUT</th>
                                     <th scope="col">DV</th>
                                     <th scope="col">Nombre</th>
@@ -55,6 +56,7 @@
                             {% comment %} Contenido aquí {% endcomment %}
                             {% for vecino in vecinos %}
                                 <tr>
+                                    <td>{{ forloop.counter }}</td>
                                     <td>{{ vecino.rut }}</td>
                                     <td>{{ vecino.dv }}</td>
                                     <td>{{ vecino.nombre }}</td>
