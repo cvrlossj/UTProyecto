@@ -346,75 +346,122 @@ class CrearJuntaVecinosView(View):
 @method_decorator([login_required, role_required(1)], name='dispatch')
 class EditarJuntaVecinosView(View):
     def get(self, request, id_juntavecino, *args, **kwargs):
-        junta_vecinos = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
-        regiones = Region.objects.all()
-        comunas = Comuna.objects.filter(id_region=junta_vecinos.id_comuna.id_region)
-        estados = EstadoJuntaVecinos.objects.all()
-        perfiles = Perfiles.objects.all()
-        perfiles_asociados = junta_vecinos.perfiles.all()
-        
-        context = {
-            'junta_vecinos': junta_vecinos,
-            'regiones': regiones,
-            'comunas': comunas,
-            'estados': estados,
-            'perfiles': perfiles,
-            'perfiles_asociados': perfiles_asociados,
-        }
-        return render(request, 'dashboarda/editarjuntavecino.html', context)
-    
-    def post(self, request, id_juntavecino, *args, **kwargs):
-        junta_vecinos = get_object_or_404(JuntaVecinos, id_juntavecino=id_juntavecino)
-        
         try:
+            junta_vecinos = JuntaVecinos.objects.get(id_juntavecino=id_juntavecino)
+            regiones = Region.objects.all()
+            comunas = Comuna.objects.filter(id_region=junta_vecinos.id_comuna.id_region)
+            # Perfiles disponibles para asociar
+            perfiles_disponibles = Perfiles.objects.filter(
+                id_comuna=junta_vecinos.id_comuna,
+                id_rol=2, 
+                id_estadoperfil=1
+            ).exclude(
+                rut__in=junta_vecinos.perfiles.values_list('rut', flat=True)
+            ).exclude(
+                juntavecinos__isnull=False  
+            )
+
+            # Estados de la junta para inhabilitar
+            estados = EstadoJuntaVecinos.objects.all()
+
+            perfiles_asociados = junta_vecinos.perfiles.filter(
+                id_comuna=junta_vecinos.id_comuna,
+                id_rol=2,  
+                id_estadoperfil=1
+            ).filter(
+                juntavecinos=junta_vecinos  
+            )
+
+            context = {
+                'junta_vecinos': junta_vecinos,
+                'regiones': regiones,
+                'comunas': comunas,
+                'perfiles_asociados': perfiles_asociados,
+                'perfiles_disponibles': perfiles_disponibles,
+                'estados': estados
+            }
+            return render(request, 'dashboarda/editarjuntavecino.html', context)
+
+        except JuntaVecinos.DoesNotExist:
+            messages.error(request, 'Junta de vecinos no encontrada.')
+            return redirect('dashboarda:juntavecinos')
+
+    def post(self, request, id_juntavecino, *args, **kwargs):
+        try:
+            junta_vecinos = JuntaVecinos.objects.get(id_juntavecino=id_juntavecino)
+
+            # Obtener datos del formulario
             nombre_organizacion = request.POST.get('nombreOrganizacion')
-            fecha_integracion = request.POST.get('fechaIntegracion')
             comuna_id = request.POST.get('comuna')
             direccion = request.POST.get('direccionOrganizacion')
             perfiles_seleccionados = request.POST.getlist('perfilesOrganizacion')
+            estado_id = request.POST.get('estado_perfil')
+            fecha_termino = request.POST.get('fecha_termino')
 
-            if not all([nombre_organizacion, fecha_integracion, comuna_id, direccion]):
+            # Validar datos
+            if not all([nombre_organizacion, direccion, estado_id]):
                 messages.error(request, 'Todos los campos marcados con * son obligatorios.')
                 return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
 
-            # Validar que la comuna exista
-            try:
-                comuna = Comuna.objects.get(id_comuna=comuna_id)
-            except Comuna.DoesNotExist:
-                messages.error(request, 'La comuna seleccionada no existe.')
-                return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
+            comuna = Comuna.objects.get(id_comuna=comuna_id)
+            estado = EstadoJuntaVecinos.objects.get(id_estado=estado_id)
 
-            # Validar que no exista otra junta de vecinos con el mismo nombre en la misma comuna
+            # Validar unicidad del nombre
             if JuntaVecinos.objects.filter(
                 nombre_organizacion=nombre_organizacion,
                 id_comuna=comuna
-            ).exclude(id=id_juntavecino).exists():
+            ).exclude(id_juntavecino=id_juntavecino).exists():
                 messages.error(request, 'Ya existe una junta de vecinos con ese nombre en la comuna seleccionada.')
                 return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
 
-            # Actualizar datos de la junta de vecinos
+            # Si el estado es "Inhabilitado" (asumiendo que es id_estado=2)
+            if estado.id_estado == 2:  # Ajusta este ID según tu configuración
+                if not fecha_termino:
+                    messages.error(request, 'Debe especificar una fecha de término para inhabilitar la junta de vecinos.')
+                    return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
+
+                # Obtener todos los perfiles actuales de la junta
+                perfiles_admin = junta_vecinos.perfiles.filter(id_rol=2)
+                vecinos = Perfiles.objects.filter(
+                    juntavecinos=junta_vecinos,
+                    id_rol=3
+                )
+
+                # Inhabilitar vecinos (id_rol=3)
+                vecinos.update(
+                    id_estadoperfil=2,  # Estado inhabilitado
+                    fecha_termino=fecha_termino
+                )
+
+                # Desasociar los perfiles administrativos (id_rol=2)
+                junta_vecinos.perfiles.remove(*perfiles_admin)
+
+            # Actualizar junta
             junta_vecinos.nombre_organizacion = nombre_organizacion
-            junta_vecinos.fecha_integracion = fecha_integracion
             junta_vecinos.id_comuna = comuna
             junta_vecinos.direccion = direccion
+            junta_vecinos.id_estado = estado
+            if fecha_termino:
+                junta_vecinos.fecha_termino = fecha_termino
             junta_vecinos.save()
 
-            # Actualizar perfiles asociados
-            if perfiles_seleccionados:
+            # Si no está inhabilitada, actualizar perfiles asociados normalmente
+            if estado.id_estado != 2:
                 perfiles = Perfiles.objects.filter(rut__in=perfiles_seleccionados)
                 junta_vecinos.perfiles.set(perfiles)
 
             messages.success(request, 'Junta de vecinos actualizada exitosamente.')
             return redirect('dashboarda:juntavecinos')
 
-        except ValueError as e:
-            messages.error(request, f'Error de validación: {str(e)}')
-            return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
+        except Comuna.DoesNotExist:
+            messages.error(request, 'La comuna seleccionada no existe.')
+        except JuntaVecinos.DoesNotExist:
+            messages.error(request, 'Junta de vecinos no encontrada.')
         except Exception as e:
             messages.error(request, f'Error al actualizar la junta de vecinos: {str(e)}')
-            return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
-        
-        
+
+        return redirect('dashboarda:editar_juntavecinos', id_juntavecino=id_juntavecino)
+
         
 @method_decorator([login_required, role_required(1)], name='dispatch')
 class JuntaVecinosView(View):

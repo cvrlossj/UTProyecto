@@ -35,13 +35,13 @@
                             <div class="col-md-2">
                                 <label for="fechaIntegracion">Fecha integración<span class="text-danger">*</span></label>
                                 <div class="input-group date">
-                                    <input type="date" class="form-control" name="fechaIntegracion" id="fechaIntegracion" value="{{ junta_vecinos.fecha_integracion|date:'Y-m-d' }}" placeholder="yyyy/mm/dd" required>
+                                    <input type="date" class="form-control" name="fechaIntegracion" id="fechaIntegracion" value="{{ junta_vecinos.fecha_integracion|date:'Y-m-d' }}" placeholder="yyyy/mm/dd" required disabled>
                                 </div>
                             </div>
                             <!-- Región -->
                             <div class="col-md-3">
                                 <label for="region">Región<span class="text-danger">*</span></label>
-                                <select class="form-control" name="region" id="region" required>
+                                <select class="form-control" name="region" id="region" required disabled>
                                     {% for region in regiones %}
                                         <option value="{{ region.id_region }}" {% if region.id_region == junta_vecinos.id_comuna.id_region.id_region %}selected{% endif %}>
                                             {{ region.nombre_region }}
@@ -52,13 +52,14 @@
                             <!-- Comuna -->
                             <div class="col-md-3">
                                 <label for="comuna">Comuna<span class="text-danger">*</span></label>
-                                <select class="form-control" name="comuna" id="comuna" required>
+                                <select class="form-control" id="comuna" required disabled>
                                     {% for comuna in comunas %}
                                         <option value="{{ comuna.id_comuna }}" {% if comuna == junta_vecinos.id_comuna %}selected{% endif %}>
                                             {{ comuna.nombre_comuna }}
                                         </option>
                                     {% endfor %}
                                 </select>
+                                <input type="hidden" name="comuna" value="{{ junta_vecinos.id_comuna.id_comuna }}">
                             </div>
                         </div>
 
@@ -78,16 +79,48 @@
                                 <br>
                                 <span class="text-muted">Mantenga presionado "Control" o "Comando" en una Mac, para seleccionar más de uno.</span>
                                 <select class="form-control" name="perfilesOrganizacion" id="perfilesOrganizacion" multiple>
-                                    {% for perfil in perfiles %}
-                                        <option value="{{ perfil.rut }}" {% if perfil in perfiles_asociados %}selected{% endif %}>
-                                            {{ perfil.nombre }} {{ perfil.apellido }}
-                                        </option>
-                                    {% endfor %}
+                                    <optgroup label="Perfiles Asociados">
+                                        {% for perfil in perfiles_asociados %}
+                                        <option value="{{ perfil.rut }}" selected>{{ perfil.nombre }} {{ perfil.apellido }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup label="Perfiles Disponibles">
+                                        {% for perfil in perfiles_disponibles %}
+                                        <option value="{{ perfil.rut }}">{{ perfil.nombre }} {{ perfil.apellido }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>
 
-
+                        <div class="row mb-3">
+                            <!-- Estado de la Junta de Vecinos -->
+                            <div class="col-md-2">
+                                <label for="estado_perfil">Estado<span class="text-danger">*</span></label>
+                                <select class="form-control" name="estado_perfil" id="estado_perfil" required>
+                                    
+                                    <option value="">Seleccione una opción</option>
+                                    {% for estado in estados %}
+                                        <option value="{{ estado.id_estado }}"
+                                            {% if estado.id_estado == junta_vecinos.id_estado.id_estado %}selected{% endif %}>
+                                            {{ estado.nombre_estado }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+    
+                            <!-- Fecha Término -->
+                            <div class="col-md-4">
+                                <label for="fecha_termino">Fecha Término</label>
+                                <div class="input-group date">
+                                    <input type="date" class="form-control" name="fecha_termino" id="fecha_termino" placeholder="yyyy/mm/dd" 
+                                        {% if junta_vecinos.fecha_termino %}
+                                            value="{{ junta_vecinos.fecha_termino|date:'Y-m-d' }}" disabled
+                                        {% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="form-group d-flex justify-content-start">
                             <a type="button" class="btn btn-secondary me-2" href="{% url "dashboarda:juntavecinos" %}">Cancelar</a>
                             <button type="submit" class="btn btn-success">Editar Junta</button>
@@ -98,10 +131,60 @@
             </div>
         </div>
     </div>
-{% endblock content %}
+{% endblock content %} 
 
 {% block script %}
-<script src="{% static 'dashboarda/js/comunasGet.js' %}"></script>
+{% comment %} <script src="{% static 'dashboarda/js/comunasGet.js' %}"></script> {% endcomment %}
+<script>
+    function loadPerfiles() {
+        const comunaId = document.getElementById('comuna').value;
+        const perfilesSelect = document.getElementById('perfilesOrganizacion');
+        
+        if (comunaId) {
+            fetch(`/get_perfiles_by_comuna/${comunaId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    perfilesSelect.innerHTML = '';
+                    data.forEach(perfil => {
+                        const option = document.createElement('option');
+                        option.value = perfil.rut;
+                        option.textContent = `${perfil.nombre} ${perfil.apellido}`;
+                        perfilesSelect.appendChild(option);
+                    });
+                });
+        }
+    }
+    
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const estadoSelect = document.getElementById('estado_perfil');
+        const fechaTerminoInput = document.getElementById('fecha_termino');
+    
+        function handleEstadoChange() {
+            // Ajusta este ID según tu configuración
+            const esInhabilitado = estadoSelect.value === '2';
+            fechaTerminoInput.required = esInhabilitado;
+            fechaTerminoInput.disabled = !esInhabilitado;
+            
+            if (!esInhabilitado) {
+                fechaTerminoInput.value = '';
+            }
+        }
+    
+        estadoSelect.addEventListener('change', handleEstadoChange);
+        handleEstadoChange(); // Ejecutar al cargar la página
+    });
+</script>
+
+
+<script>
+    flatpickr("#fecha_termino", {
+        minDate: "today",
+        locale: "es",
+    });
+</script>
 <script>
     flatpickr("#fechaIntegracion", {
         minDate: "today",

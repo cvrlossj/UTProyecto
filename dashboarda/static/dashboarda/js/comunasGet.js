@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             comunaSelect.innerHTML = '<option value="">Selecciona una comuna</option>';
             comunaSelect.setAttribute('disabled', 'true');
         }
-    });
+    }); 
 
     // Evento para cargar perfiles al seleccionar una comuna
     comunaSelect.addEventListener('change', function() {
