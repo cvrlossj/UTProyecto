@@ -67,7 +67,13 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ vecino.id_sexo.descripcion }}</td>
-                                    <td>{{ vecino.id_parentesco.descripcion }}</td>
+                                    {% if vecino.id_parentesco.descripcion == 'Titular' %}
+                                        <td>    
+                                            <span class="badge text-bg-warning">Titular</span>
+                                        </td>
+                                    {% else %}
+                                        <td>{{vecino.id_parentesco.descripcion}}</td>
+                                    {% endif %}
                                     <td>{{ vecino.direccion }}</td>
                                     <td>{{ vecino.fecha_incorporacion|date:"d/m/Y" }}</td>
                                     <td>{{ vecino.fecha_termino|date:"d/m/Y" }}</td>

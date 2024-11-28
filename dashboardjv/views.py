@@ -210,7 +210,18 @@ class EditarVecinoTitular(View):
             
             vecino.save()
             
-            messages.success(request, 'El perfil del vecino se ha actualizado correctamente.')
+            # Verificar si es titular y si el estado implica inhabilitación
+            if vecino.id_parentesco.descripcion == "Titular" and vecino.fecha_termino:
+                familia = vecino.familia
+                if familia:
+                    # Actualizar el estado y la fecha de término de todos los miembros
+                    miembros = familia.miembros.all()
+                    for miembro in miembros:
+                        miembro.id_estadoperfil = vecino.id_estadoperfil
+                        miembro.fecha_termino = vecino.fecha_termino
+                        miembro.save()
+            
+            messages.success(request, 'El perfil del vecino se han actualizado correctamente.')
             return redirect('dashboardjv:listavecinos')
 
         except Exception as e:
