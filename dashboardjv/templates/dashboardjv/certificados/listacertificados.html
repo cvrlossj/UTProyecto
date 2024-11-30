@@ -51,7 +51,7 @@
                             {% comment %} Contenido aquí {% endcomment %}
                             {% for certificado in certificados %}
                                 <tr>
-                                    <td>{{ certificado.id_certificado }}</td>
+                                    <td>{{ forloop.counter }}</td>
                                     <td>{{ certificado.rut_postulante.rut }}</td>
                                     <td>{{ certificado.nombre_postulante }}</td>
                                     <td>{{ certificado.direccion_postulante }}</td>

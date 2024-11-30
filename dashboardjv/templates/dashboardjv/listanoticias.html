@@ -37,6 +37,7 @@
                         <table id="logsNoticias" class="table table-hover table-striped">
                             <thead>
                                 <tr>
+                                    <th scope="col">#</th>
                                     <th scope="col">Titulo</th>
                                     <th scope="col">Fecha Inicio</th>
                                     <th scope="col">Fecha Termino</th>
@@ -48,6 +49,8 @@
                             {% comment %} Contenido aquí {% endcomment %}
                             {% for noticia in noticias %}
                                 <tr>
+                                    
+                                    <td>{{ forloop.counter }}</td>
                                     <td>{{ noticia.nombre }}</td>
                                     <td>{{ noticia.fecha_inicio|date:"d/m/Y" }}</td>
                                     <td>{{ noticia.fecha_termino|date:"d/m/Y" }}</td>
