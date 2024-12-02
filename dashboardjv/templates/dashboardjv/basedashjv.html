@@ -72,6 +72,14 @@
                             </ul>
                         </li> 
                         <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" id="certificadosresidencia" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ri-bookmark-3-line"></i> Actividades
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="tiktokDropdown">
+                                <li><a class="dropdown-item" href="{% url "dashboardjv:listaactividades" %}"><i class="ri-send-plane-2-line"></i>  Lista Actividades</a></li>
+                            </ul>
+                        </li> 
+                        <li class="nav-item dropdown">
                             <a class="nav-link" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="{% static "dashboarda/img/user.png" %}" class="rounded-circle" style="width: 40px; height: 40px;">
                             </a>

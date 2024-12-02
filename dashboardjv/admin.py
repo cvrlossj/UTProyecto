@@ -36,5 +36,5 @@ class EstadoActividadAdmin(admin.ModelAdmin):
    
 @admin.register(Actividad)
 class ActividadAdmin(admin.ModelAdmin):
-   list_display = ('id_actividad', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_termino', 'horario_inicio', 'horario_termino', 'id_estadoactividad')
+   list_display = ('id_actividad', 'nombre', 'descripcion', 'fecha_inicio', 'horario_inicio', 'horario_termino', 'id_estadoactividad')
    search_fields = ('nombre', 'descripcion')

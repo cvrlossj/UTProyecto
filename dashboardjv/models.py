@@ -24,12 +24,32 @@ class Actividad(models.Model):
   nombre = models.CharField(max_length=80)
   descripcion = models.TextField()
   fecha_inicio = models.DateField()
-  fecha_termino = models.DateField()
   horario_inicio = models.TimeField()
   horario_termino = models.TimeField()
+  periodo_inicio = models.CharField(max_length=2, choices=[('AM', 'AM'), ('PM', 'PM')], default='AM')
+  periodo_termino = models.CharField(max_length=2, choices=[('AM', 'AM'), ('PM', 'PM')], default='AM')
+  cupos = models.IntegerField()
   id_estadoactividad = models.ForeignKey(EstadoActividad, on_delete=models.CASCADE)
   id_juntavecinos = models.ForeignKey(JuntaVecinos, on_delete=models.CASCADE)
+
+class InscripcionActividad(models.Model):
+  id_inscripcion = models.AutoField(unique=True, primary_key=True)
+  id_perfil = models.ForeignKey(Perfiles, on_delete=models.CASCADE)
+  id_actividad = models.ForeignKey(Actividad, on_delete=models.CASCADE)
+  fecha_inscripcion = models.DateField(auto_now_add=True)
+
+  class Meta:
+    unique_together = ['id_perfil', 'id_actividad'] # evitamos inscripciones duplicadas
   
+  def __str__(self):
+    return f"Inscripción de {self.id_perfil} en la actividad {self.id_actividad}"
+
+  def save(self, *args, **kwargs):
+        # Verificar si hay cupos disponibles antes de guardar
+        if self.id_actividad.cupos <= InscripcionActividad.objects.filter(id_actividad=self.id_actividad).count():
+            raise ValueError("No hay cupos disponibles para esta actividad.")
+        super().save(*args, **kwargs)
+
 class PostulacionProyectos(models.Model):
   id_proyecto = models.AutoField(unique=True, primary_key=True)
   titulo = models.CharField(max_length=150)

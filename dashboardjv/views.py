@@ -21,7 +21,7 @@ from accounts.models import Perfiles, Familia, EstadoPerfil, Sexo, Parentesco, R
 # Modelos propios
 from django.db.models import Count
 from django.db.models import Q
-from .models import Noticias, CertificadosResi, EstadoNoticia, EstadoCertificado
+from .models import Noticias, CertificadosResi, EstadoNoticia, EstadoCertificado, Actividad, EstadoActividad, InscripcionActividad
 # Email de Django
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.template.loader import render_to_string
@@ -1184,6 +1184,160 @@ def reset_data(request):
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+# ! ---- [Final de Certificado de Residencia]
+
+
+#! ---- [Actividades] ----
+@method_decorator([login_required, role_required(2)], name='dispatch')
+class ListaActividades(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        actividades = Actividad.objects.filter(id_juntavecinos=junta)
+        
+        # Contar cu[antos cupos han sido tomados para cada actividad
+        for actividad in actividades:
+            actividad.cupos_tomados = InscripcionActividad.objects.filter(id_actividad=actividad).count()
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'actividades': actividades,
+        }
+        return render(request, 'dashboardjv/actividades/listaactividades.html', context)
+
+
+@method_decorator([login_required, role_required(2)], name='dispatch')
+class CrearActividad(View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        actividades = Actividad.objects.filter(id_juntavecinos=junta)
+        total_miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+        
+        context = {
+            'user': user,
+            'junta': junta,
+            'actividades': actividades,
+            'total_miembros': total_miembros
+        }
+        return render(request, 'dashboardjv/actividades/crearactividad.html', context)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        junta = get_object_or_404(JuntaVecinos, perfiles=user)
+        
+        # Formulario
+        titulo = request.POST.get('titulo')
+        descripcion = request.POST.get('descripcion')
+        fecha_inc = request.POST.get('fecha_inc')
+        hora_inc = request.POST.get('hora_inc')
+        hora_ter = request.POST.get('hora_ter')
+        cupos = request.POST.get('cupos')
+        
+        if titulo and descripcion and fecha_inc and hora_inc and hora_ter and cupos:
+            try:
+                # Creamos la actividad
+                estado = EstadoActividad.objects.get(pk=1) 
+                actividad = Actividad.objects.create(
+                    nombre=titulo,
+                    descripcion=descripcion,
+                    fecha_inicio=fecha_inc,
+                    horario_inicio=hora_inc,
+                    horario_termino=hora_ter,
+                    cupos=cupos,
+                    id_estadoactividad=estado,
+                    id_juntavecinos=junta
+                )
+
+                # Obtener los correos electrónicos de los miembros activos
+                miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1)  # Miembros activos
+                correos = [miembro.correo_electronico for miembro in miembros if miembro.correo_electronico]
+
+                if correos:
+                    try:
+                        # Crear el contenido HTML
+                        html_content = f"""
+                        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+                            <div style="background-color: #007bff; color: white; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0;">{junta.nombre_organizacion}</h1>
+                                <p style="margin: 10px 0 0 0;">Nueva Actividad</p>
+                            </div>
+                            
+                            <div style="padding: 20px; background-color: #f8f9fa;">
+                                <h2 style="color: #007bff;">{actividad.nombre}</h2>
+                                
+                                <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                                    <p><strong>Fecha de Actividad:</strong> {actividad.fecha_inicio}</p>
+                                    <p><strong>Hora inicio:</strong> {actividad.horario_inicio}</p>
+                                    <p><strong>Hora término:</strong> {actividad.horario_termino}</p>
+                                    <p><strong>Cupos disponibles:</strong> {actividad.cupos}</p>
+                                </div>
+                                
+                                <div style="background-color: white; padding: 15px; border-radius: 5px;">
+                                    {actividad.descripcion}
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 0.9em;">
+                                    <p>Este es un mensaje automático de tu Junta de Vecinos</p>
+                                    <p>Por favor, no responder a este correo</p>
+                                </div>
+                            </div>
+                        </div>
+                        """
+
+                        text_content = f"""
+                        {junta.nombre_organizacion}
+                        Nueva Actividad
+
+                        {actividad.nombre}
+
+                        Fecha inicio: {actividad.fecha_inicio}
+                        Hora inicio: {actividad.horario_inicio}
+                        Hora término: {actividad.horario_termino}
+                        Cupos disponibles: {actividad.cupos}
+
+                        {actividad.descripcion}
+
+                        Este es un mensaje automático de tu Junta de Vecinos
+                        Por favor, no responder a este correo
+                        """
+
+                        subject = f"Nueva Actividad: {actividad.nombre}"
+                        for correo in correos:
+                            email = EmailMultiAlternatives(
+                                subject=subject,
+                                body=text_content,
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                to=[correo] 
+                            )
+                            email.attach_alternative(html_content, "text/html")
+                            email.send()
+
+                        messages.success(request, "Actividad creada y enviada exitosamente.")
+
+                    except Exception as e:
+                        logger.error(f"Error al enviar el correo: {str(e)}")
+                        messages.warning(request, "La actividad se creó pero hubo un error al enviar los correos.")
+
+                return redirect('dashboardjv:listaactividades')  # Asegúrate de que esta URL sea correcta
+
+            except Exception as e:
+                logger.error(f"Error al crear la actividad: {str(e)}")
+                messages.error(request, f'Error al crear la actividad: {str(e)}')
+                context = {
+                    'user': user,
+                    'junta': junta,
+                }
+                return render(request, 'dashboardjv/actividades/crearactividad.html', context)
+        else:
+            messages.error(request, 'Todos los campos obligatorios deben ser completados.')
+            context = {
+                'user': user,
+                'junta': junta,
+            }
+            return render(request, 'dashboardjv/actividades/crearactividad.html', context)
+        
 
 #! ---- [Dashboard Junta de Vecinos] ----
 @method_decorator([login_required, role_required(2)], name='dispatch')

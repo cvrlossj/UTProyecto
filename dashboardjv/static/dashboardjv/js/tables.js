@@ -33,4 +33,5 @@ $(document).ready(function() {
     initDataTable('logsTableVecinos'); 
     initDataTable('logsNoticias'); 
     initDataTable('logsCertificados'); 
+    initDataTable('logsActividades'); 
 });
