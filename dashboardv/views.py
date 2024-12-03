@@ -8,8 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 # Modelos Propios
+from django.db.models import Prefetch
 from accounts.models import Perfiles, Sexo, Parentesco
-from dashboardjv.models import JuntaVecinos, CertificadosResi, EstadoCertificado
+from dashboardjv.models import JuntaVecinos, CertificadosResi, EstadoCertificado, Actividad, InscripcionActividad
 from dashboarda.utils import role_required
 
 
@@ -132,7 +133,7 @@ class SolicitarCertificadoResidencia(View):
                     id_estadocertificado=estado_certificado
                )
 
-               messages.success(request, 'Certificado creado con éxito.')
+               messages.success(request, 'Certificado solicitado con éxito.')
                return redirect('dashboardv:listacertificados')
 
           except Exception as e:
@@ -168,6 +169,94 @@ class ListaFamilia(View):
           return render(request, 'dashboardv/listamiembrosfamilia.html', context)
 
 
+@method_decorator([login_required, role_required(3)], name='dispatch')
+class ListaActividades(View):
+     def get(self, request, *args, **kwargs):
+          user = request.user
+          junta = get_object_or_404(JuntaVecinos, perfiles=user)
+          
+          actividades = Actividad.objects.filter(
+               id_juntavecinos=junta
+          )
+          
+          # Cupos tomados para está actividad
+          for actividad in actividades:
+               actividad.cupos_tomados = InscripcionActividad.objects.filter(id_actividad=actividad).count()
+          
+          context = {
+               'user': user,
+               'junta': junta,
+               'actividades': actividades,
+               'cupos_tomados': actividad.cupos_tomados,
+          }
+          return render(request, 'dashboardv/actividades/listaactividades.html', context)
+
+@method_decorator([login_required, role_required(3)], name='dispatch')
+class InscribirseActividad(View):
+     def get(self, request, id_actividad, *args, **kwargs):
+          user = request.user
+          junta = get_object_or_404(JuntaVecinos, perfiles=user)
+          
+          actividad = get_object_or_404(Actividad, id_actividad=id_actividad)
+          inscripciones = InscripcionActividad.objects.filter(id_actividad=actividad)
+          familia_usuario = user.familia
+          
+          miembros = Perfiles.objects.filter(
+               inscripcionactividad__id_actividad=actividad,
+               inscripcionactividad__id_perfil__in=junta.perfiles.all(),
+               familia=familia_usuario
+          ).prefetch_related(
+               Prefetch('inscripcionactividad_set', queryset=inscripciones, to_attr='inscripciones')
+          ).distinct()
+          
+          context = {
+               'user': user,
+               'junta': junta,
+               'actividad': actividad,
+               'miembros': miembros,
+          }
+          return render(request, 'dashboardv/actividades/inscribirseactividad.html', context)
+          
+     def post(self, request, id_actividad, *args, **kwargs):
+          user = request.user
+          actividad = get_object_or_404(Actividad, id_actividad=id_actividad)
+
+          # Obtener el miembro seleccionado desde el formulario
+          perfil_rut = request.POST.get('rut')
+          perfil = get_object_or_404(Perfiles, rut=perfil_rut)
+          
+          # Verificar si ya está inscrito
+          if InscripcionActividad.objects.filter(id_perfil=perfil, id_actividad=actividad).exists():
+               messages.error(request, 'El miembro ya está inscrito en esta actividad.')
+               return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
+          
+          # Verificar si hay cupos disponibles
+          if actividad.cupos <= InscripcionActividad.objects.filter(id_actividad=actividad).count():
+               messages.error(request, 'No hay cupos disponibles para esta actividad.')
+               return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
+          
+          # Crear la inscripción
+          try:
+               inscripcion = InscripcionActividad(id_perfil=perfil, id_actividad=actividad)
+               inscripcion.save()
+               messages.success(request, f'{perfil.nombre} {perfil.apellido} ha sido inscrito con éxito en la actividad.')
+               return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
+          except Exception as e:
+               messages.error(request, f'Error al inscribir: {str(e)}')
+               return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
+
+@method_decorator([login_required, role_required(3)], name='dispatch')
+class CancelarInscripcion(View):
+     def get(self, request, id_actividad, id_inscripcion, *args, **kwargs):
+          inscripcion = get_object_or_404(InscripcionActividad, id_inscripcion=id_inscripcion)
+          
+          try:
+               inscripcion.delete()
+               messages.success(request, 'Inscripción cancelada con éxito.')
+          except Exception as e:
+               messages.error(request, f'Error al cancelar inscripción: {str(e)}')
+          return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
+          
 
 
 # ! Dashboard

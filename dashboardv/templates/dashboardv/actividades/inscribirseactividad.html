@@ -1,0 +1,238 @@
+{% extends "dashboardv/basevecino.html" %}
+{% load static %}
+
+{% block title %}Inscribir Actividad{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <style>
+                /* Ajustar márgenes de los párrafos para reducir el espacio extra */
+        .card-body p {
+            margin: 0;  /* Elimina márgenes por defecto */
+            padding: 0; /* Elimina padding extra */
+        }
+
+        /* Si necesitas añadir espacio entre los párrafos, usa este estilo */
+        .card-body p + p {
+            margin-top: 10px; /* Añadir espacio entre los párrafos */
+        }
+
+        /* Eliminar los saltos de línea <br> al final del contenido */
+        .card-body br {
+            display: none; /* Ocultar los <br> innecesarios */
+        }
+
+        /* Alternativamente, si necesitas un espacio mayor entre párrafos */
+        .card-body p {
+            line-height: 1.5; /* Aumentar el interlineado para mejor legibilidad */
+        }
+
+    </style>
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">{{familia.nombre}}</h2>
+        </div> 
+        
+        <div class="row">
+            <!-- Información de la actividad -->
+            <div class="col-md-12">
+                <div class="card mb-4 border-1 rounded-2">
+                    <div class="card-body py-3">
+                        <h3 class="card-title text-black d-flex align-items-center mt-2">
+                            <span class="text-black">{{actividad.nombre}}</span>
+                        </h3>
+                        <ul>
+                            <li>Fecha: {{actividad.fecha_inicio|date:"d/m/Y"}}</li>
+                            <li>Hora Inicio: {{actividad.horario_inicio|date:"h:i A"}}</li>
+                            <li>Hora Término: {{actividad.horario_termino|date:"h:i A"}}</li>
+                            <li>Cupos Totales: {{actividad.cupos}}</li>
+                        </ul>
+                        <span class="text-black">{{actividad.descripcion|safe}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h2 class="text-muted mb-3">Inscribir a la actividad</h2>
+                    <form method="post" id="InscripcionActividad" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="rut">Selecciona un miembro<span class="text-danger">*</span></label>
+                                <select class="form-control" name="rut" id="rut" required>
+                                    <option value="">Selecciona un miembro</option> <!-- Opción por defecto -->
+                                </select>
+                            </div>
+                            <!-- DV -->
+                            <div class="col-md-1">
+                                <label for="dv">Dv<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="dv" id="dv" required readonly>
+                            </div>
+                            <!-- Nombre -->
+                            <div class="col-md-3">
+                                <label for="nombre">Nombre<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nombre" id="nombre" required readonly>
+                            </div>
+                            <!-- Apellido -->
+                            <div class="col-md-3">
+                                <label for="apellido">Apellido<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="apellido" id="apellido" required readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- Email -->
+                        <div class="row mb-3">
+                            <div class="col-md-5">
+                                <label for="email">Email<span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="email" required readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-start">
+                            <button type="submit" class="btn btn-success">Inscribir a la Actividad</button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row mt-2">
+            <div class="container">
+                {% if messages %}
+                    <div class="alert alert-success" role="alert">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="container">
+                
+                <div class="col-md-12">
+                    <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                        <div class="card-body py-4 my-1">
+                            <h4 class="card-title text-black d-flex align-items-center">
+                                <span class="text-black mb-2">Inscripciones de la Familia</span>
+                            </h4>
+                            <div class="table-responsive">
+                                <table id="logsActividadesMiembros" class="table table-hover table-striped table-sm">
+                                        <thead style="background-color: #337AB7; color: white;">
+                                            <tr>
+                                                <th>RUT</th>
+                                                <th>DV</th>
+                                                <th>Nombre</th>
+                                                <th>Apellido</th> 
+                                                <th>Correo Electrónico</th> 
+                                                <th>Fecha Inscripción</th> 
+                                                <th>Estado</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for miembro in miembros %}
+                                                {% for inscripcion in miembro.inscripcionactividad_set.all %}
+                                                    <tr>
+                                                        <td>{{ miembro.rut }}</td>
+                                                        <td>{{ miembro.dv }}</td>
+                                                        <td>{{ miembro.nombre }}</td>
+                                                        <td>{{ miembro.apellido }}</td>
+                                                        <td>{{ miembro.correo_electronico }}</td>
+                                                        <td>{{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}</td>
+                                                        <td>
+                                                            <span class="badge text-bg-success">inscrito</span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    Acciones
+                                                                </button>
+                                                                
+                                                                <ul class="dropdown-menu">
+                                                                        <li>
+                                                                            <a class="dropdown-item" href="{% url 'dashboardv:cancelar_inscripcion' id_actividad=inscripcion.id_actividad.id_actividad id_inscripcion=inscripcion.id_inscripcion %}">
+                                                                                <i class="ri-loop-left-line"></i> Cancelar Inscripción
+                                                                            </a>
+                                                                        </li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="8" class="text-center">No hay inscripciones para esta actividad.</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboardv/js/tables.js' %}"></script>
+
+<script>
+    // Cargar miembros al cargar la página
+    window.onload = function() {
+        fetch('/vecino/buscar-miembros-all/')  // Llamada a la API para obtener todos los miembros
+            .then(response => response.json())
+            .then(data => {
+                const rutSelect = document.getElementById('rut');
+                
+                if (data.success) {
+                    data.miembros.forEach(miembro => {
+                        const option = document.createElement('option');
+                        option.value = miembro.rut;
+                        option.textContent = `${miembro.rut}-${miembro.dv} ${miembro.nombre} ${miembro.apellido}`;
+                        option.dataset.email = miembro.correo_electronico;
+                        rutSelect.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No se encontraron miembros';
+                    rutSelect.appendChild(option);
+                }
+            })
+            .catch(error => console.error('Error al cargar los miembros:', error));
+    };
+
+    // Completar los campos cuando se selecciona un miembro
+    document.getElementById('rut').addEventListener('change', function() {
+        const selectedRut = this.value;
+        const rutSelect = document.getElementById('rut');
+        
+        if (selectedRut) {
+            const selectedMember = Array.from(rutSelect.options).find(option => option.value === selectedRut);
+            const memberData = selectedMember.textContent.split(' ');
+
+            // Extraer los datos del miembro seleccionado
+            const rut = memberData[0].split('-')[0];
+            const dv = memberData[0].split('-')[1];
+            const nombre = memberData[1];
+            const apellido = memberData[2];
+            const email = selectedMember.dataset.email;
+
+            // Asignar los valores a los campos correspondientes
+            document.getElementById('dv').value = dv;
+            document.getElementById('nombre').value = nombre;
+            document.getElementById('apellido').value = apellido;
+            document.getElementById('email').value = email;
+        }
+    });
+</script>
+
+{% endblock script %}

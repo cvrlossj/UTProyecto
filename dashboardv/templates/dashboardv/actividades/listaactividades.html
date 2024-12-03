@@ -1,0 +1,92 @@
+{% extends "dashboardv/basevecino.html" %}
+{% load static %}
+
+{% block title %}Actividades{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'dashboardv/css/styles.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="container">
+        <div class="mb-2">
+            <h2 class="text-muted">Actividades</h2>
+        </div> 
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row">
+
+    <div class="container">
+        <div class="col-md-12">
+            <div class="card mb-4 border-1 rounded-2" style="background-color: #fcfcfc;">
+                <div class="card-body py-4 my-1">
+                    <h4 class="card-title text-black d-flex align-items-center">
+                        <span class="text-black mb-2">Listado de Actividades</span>
+                    </h4>
+                    <div class="table-responsive">
+                        <table id="logsActividades" class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Titulo</th>
+                                    <th scope="col">Fecha</th>
+                                    <th scope="col">Hora Inicio</th>
+                                    <th scope="col">Hora Término</th>
+                                    <th scope="col">Cupos Totales</th>
+                                    <th scope="col">Cupos Tomados</th>
+                                    <th scope="col">Estado.</th>
+                                    <th scope="col">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for actividad in actividades %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ actividad.nombre }}</td>
+                                    <td>{{ actividad.fecha_inicio|date:"d/m/Y" }}</td>
+                                    <td>{{ actividad.horario_inicio|date:"h:i A" }}</td>
+                                    <td>{{ actividad.horario_termino|date:"h:i A" }}</td>
+                                    <td>{{ actividad.cupos }}</td>
+                                    <td>{{ actividad.cupos_tomados }}</td>
+                                    <td>
+                                        {% if actividad.id_estadoactividad.descripcion == 'habilitada' %}
+                                            <span class="badge text-bg-success">habilitada</span>
+                                        {% elif actividad.id_estadoactividad.descripcion == 'habilitada' %}
+                                            <span class="badge text-bg-warning">inhabilitada</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Botón principal que despliega el dropdown -->
+                                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            Acciones
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <!-- Opción para Inscribirme -->
+                                                        <a class="dropdown-item edit-junta" href="{% url "dashboardv:inscribirseactividad" actividad.id_actividad %}"> 
+                                                            <i class="ri-user-star-line"></i> Inscribir a la Actividad
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'dashboardv/js/tables.js' %}"></script>
+{% endblock script %}

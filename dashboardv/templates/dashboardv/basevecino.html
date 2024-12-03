@@ -11,20 +11,20 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <!-- REMIXICONS -->
         <link href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css" rel="stylesheet" />
+        <!-- DataTables Bootstrap 5 Integration -->
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
         <!-- CSS Personalizado -->
         <link rel="stylesheet" href="{% static 'dashboarda/css/styles.css' %}">
-        
-        <!-- DataTables Bootstrap 5 Integration -->
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
-    
         <!-- DatePicker -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
-        
         <!-- Flatpickr -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script> <!-- Traducción al español -->
+        <!-- CSS de Quill -->
+        <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+        <!-- JS de Quill -->
+        <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
         
     </head>
 <body style="background-color:#F7F8FA">
@@ -71,6 +71,14 @@
                             </ul>
                         </li> 
                         <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" id="certificadosresidencia" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ri-bookmark-3-line"></i> Actividades
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="tiktokDropdown">
+                                <li><a class="dropdown-item" href="{% url "dashboardv:listaactividades" %}"><i class="ri-send-plane-2-line"></i>  Lista Actividades</a></li>
+                            </ul>
+                        </li> 
+                        <li class="nav-item dropdown">
                             <a class="nav-link" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="{% static "dashboarda/img/user.png" %}" class="rounded-circle" style="width: 40px; height: 40px;">
                             </a>
@@ -96,12 +104,9 @@
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-        
-        <!-- DataTables -->
         <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
         {% block script %}{% endblock script %}
 </body>
 </html>

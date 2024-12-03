@@ -4,7 +4,7 @@
 {% block title %}Mi familia{% endblock title %}
 
 {% block css %}
-<link rel="stylesheet" href="{% static 'dashboardjv/css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'dashboardv/css/styles.css' %}">
 {% endblock css %}
 
 {% block content %}
@@ -70,13 +70,14 @@
                                 
                             </h4>
                             <div class="table-responsive">
-                                <table id="logsTableListaMiembros" class="table table-hover table-striped">
-                                        <thead>
+                                <table id="logsTableListaMiembros" class="table table-hover table-striped table-sm">
+                                        <thead style="background-color: #337AB7; color: white;">
                                             <tr>
                                                 <th>RUT</th>
                                                 <th>DV</th>
                                                 <th>Nombre</th>
                                                 <th>Apellido</th>
+                                                <th>Correo Electrónico</th>
                                                 <th>Parentesco</th>
                                                 <th>Sexo</th>
                                                 <th>Fecha de Nacimiento</th>
@@ -91,6 +92,7 @@
                                                 <td>{{ miembro.dv }}</td>
                                                 <td>{{ miembro.nombre }}</td>
                                                 <td>{{ miembro.apellido }}</td>
+                                                <td>{{ miembro.correo_electronico }}</td>
                                                 {% if miembro.id_parentesco.descripcion == 'Titular' %}
                                                     <td>    
                                                         <span class="badge text-bg-warning">Titular</span>

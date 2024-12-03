@@ -12,7 +12,7 @@ function initDataTable(tableId) {
         "responsive": true,
         "language": {
             "emptyTable": "No hay datos disponibles en la tabla",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
             "infoEmpty": "Mostrando 0 a 0 de 0 registros",
             "infoFiltered": "(filtered from _MAX_ total entries)",
             "lengthMenu": "Mostrar _MENU_ registros",
@@ -31,4 +31,6 @@ function initDataTable(tableId) {
 $(document).ready(function() {
     initDataTable('logsCertificadosVecinos'); 
     initDataTable('logsTableListaMiembros'); 
+    initDataTable('logsActividades'); 
+    initDataTable('logsActividadesMiembros'); 
 });
