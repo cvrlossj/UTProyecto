@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Noticias, CertificadosResi, PostulacionProyectos, Actividad, EstadoPostulacion, EstadoCertificado, EstadoNoticia, EstadoActividad
+from .models import Noticias, CertificadosResi, PostulacionProyectos, Actividad, InscripcionActividad,EstadoPostulacion, EstadoCertificado, EstadoNoticia, EstadoActividad
 
 
 
@@ -38,3 +38,8 @@ class EstadoActividadAdmin(admin.ModelAdmin):
 class ActividadAdmin(admin.ModelAdmin):
    list_display = ('id_actividad', 'nombre', 'descripcion', 'fecha_inicio', 'horario_inicio', 'horario_termino', 'id_estadoactividad')
    search_fields = ('nombre', 'descripcion')
+   
+   
+@admin.register(InscripcionActividad)
+class InscripcionActividad(admin.ModelAdmin):
+   list_display = ('id_inscripcion', )
