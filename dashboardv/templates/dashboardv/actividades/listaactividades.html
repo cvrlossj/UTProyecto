@@ -37,8 +37,7 @@
                                     <th scope="col">Fecha</th>
                                     <th scope="col">Hora Inicio</th>
                                     <th scope="col">Hora Término</th>
-                                    <th scope="col">Cupos Totales</th>
-                                    <th scope="col">Cupos Tomados</th>
+                                    <th scope="col">Cupos</th>
                                     <th scope="col">Estado.</th>
                                     <th scope="col">Acción</th>
                                 </tr>
@@ -51,8 +50,10 @@
                                     <td>{{ actividad.fecha_inicio|date:"d/m/Y" }}</td>
                                     <td>{{ actividad.horario_inicio|date:"h:i A" }}</td>
                                     <td>{{ actividad.horario_termino|date:"h:i A" }}</td>
-                                    <td>{{ actividad.cupos }}</td>
-                                    <td>{{ actividad.cupos_tomados }}</td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ actividad.cupos_tomados }}</span> /
+                                        <span class="badge bg-success">{{ actividad.cupos }}</span>
+                                    </td>
                                     <td>
                                         {% if actividad.id_estadoactividad.descripcion == 'habilitada' %}
                                             <span class="badge text-bg-success">habilitada</span>

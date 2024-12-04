@@ -106,13 +106,11 @@
 
         <div class="row mt-2">
             <div class="container">
-                {% if messages %}
-                    <div class="alert alert-success" role="alert">
-                        {% for message in messages %}
-                            {{ message }}
-                        {% endfor %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" role="alert">
+                        {{ message }}
                     </div>
-                {% endif %}
+                {% endfor %}
             </div>
             <div class="container">
                 
@@ -166,10 +164,6 @@
                                                         </td>
                                                     </tr>
                                                 {% endfor %}
-                                            {% empty %}
-                                                <tr>
-                                                    <td colspan="8" class="text-center">No hay inscripciones para esta actividad.</td>
-                                                </tr>
                                             {% endfor %}
                                         </tbody>
                                 </table>
@@ -231,8 +225,20 @@
             document.getElementById('nombre').value = nombre;
             document.getElementById('apellido').value = apellido;
             document.getElementById('email').value = email;
+        } else {
+            // Si no se selecciona ningún miembro, limpiar los campos
+            limpiarCampos();
         }
     });
+
+    // Función para limpiar los campos
+    function limpiarCampos() {
+        document.getElementById('dv').value = '';
+        document.getElementById('nombre').value = '';
+        document.getElementById('apellido').value = '';
+        document.getElementById('email').value = '';
+    }
 </script>
+
 
 {% endblock script %}

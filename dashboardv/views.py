@@ -8,11 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 # Modelos Propios
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count
 from accounts.models import Perfiles, Sexo, Parentesco
 from dashboardjv.models import JuntaVecinos, CertificadosResi, EstadoCertificado, Actividad, InscripcionActividad
 from dashboarda.utils import role_required
-
+from django.conf import settings
+# Email de Django
+from django.core.mail import EmailMultiAlternatives, send_mail
 
 @method_decorator([login_required, role_required(3)], name='dispatch')
 class EditarPerfil(View):
@@ -177,17 +179,12 @@ class ListaActividades(View):
           
           actividades = Actividad.objects.filter(
                id_juntavecinos=junta
-          )
-          
-          # Cupos tomados para está actividad
-          for actividad in actividades:
-               actividad.cupos_tomados = InscripcionActividad.objects.filter(id_actividad=actividad).count()
+          ).annotate(cupos_tomados=Count('inscripcionactividad'))
           
           context = {
                'user': user,
                'junta': junta,
                'actividades': actividades,
-               'cupos_tomados': actividad.cupos_tomados,
           }
           return render(request, 'dashboardv/actividades/listaactividades.html', context)
 
@@ -239,23 +236,118 @@ class InscribirseActividad(View):
           try:
                inscripcion = InscripcionActividad(id_perfil=perfil, id_actividad=actividad)
                inscripcion.save()
+
+               # Enviar correo al miembro que se inscribe
+               self.enviar_correo_inscripcion(perfil, actividad)
+
                messages.success(request, f'{perfil.nombre} {perfil.apellido} ha sido inscrito con éxito en la actividad.')
                return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
           except Exception as e:
                messages.error(request, f'Error al inscribir: {str(e)}')
                return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
 
+     def enviar_correo_inscripcion(self, perfil, actividad):
+          # Contenido en texto plano
+          text_content = f"""
+          Estimado/a {perfil.nombre},
+
+          Te has inscrito exitosamente en la actividad: {actividad.nombre}
+
+          Fecha: {actividad.fecha_inicio}
+          Hora inicio: {actividad.horario_inicio}
+          Hora término: {actividad.horario_termino}
+
+          ¡Te esperamos en la actividad!
+
+          Este es un mensaje automático, por favor no responder.
+          """
+
+          # Contenido en HTML
+          html_content = f"""
+          <html>
+               <body>
+                    <h2>¡Inscripción Exitosa!</h2>
+                    <p>Estimado/a {perfil.nombre},</p>
+                    <p>Te has inscrito en la actividad: <strong>{actividad.nombre}</strong></p>
+                    <p><strong>Fecha:</strong> {actividad.fecha_inicio}</p>
+                    <p><strong>Hora inicio:</strong> {actividad.horario_inicio}</p>
+                    <p><strong>Hora término:</strong> {actividad.horario_termino}</p>
+                    <p>¡Nos vemos pronto!</p>
+               </body>
+          </html>
+          """
+
+          # Enviar el correo
+          subject = f"Inscripción exitosa a la actividad: {actividad.nombre}"
+          email = EmailMultiAlternatives(
+               subject=subject,
+               body=text_content,
+               from_email=settings.DEFAULT_FROM_EMAIL,
+               to=[perfil.correo_electronico]  # Correo del perfil inscrito
+          )
+          email.attach_alternative(html_content, "text/html")
+          email.send()
+
 @method_decorator([login_required, role_required(3)], name='dispatch')
 class CancelarInscripcion(View):
      def get(self, request, id_actividad, id_inscripcion, *args, **kwargs):
           inscripcion = get_object_or_404(InscripcionActividad, id_inscripcion=id_inscripcion)
-          
+          perfil = inscripcion.id_perfil  # Perfil asociado a la inscripción
+
           try:
                inscripcion.delete()
+
+               # Enviar correo de cancelación al perfil
+               self.enviar_correo_cancelacion(perfil, inscripcion.id_actividad)
+
                messages.success(request, 'Inscripción cancelada con éxito.')
           except Exception as e:
                messages.error(request, f'Error al cancelar inscripción: {str(e)}')
+          
           return redirect('dashboardv:inscribirseactividad', id_actividad=id_actividad)
+
+     def enviar_correo_cancelacion(self, perfil, actividad):
+          # Contenido en texto plano
+          text_content = f"""
+          Estimado/a {perfil.nombre},
+
+          Tu inscripción en la actividad: {actividad.nombre} ha sido cancelada.
+
+          Fecha: {actividad.fecha_inicio}
+          Hora inicio: {actividad.horario_inicio}
+          Hora término: {actividad.horario_termino}
+          Cupos ahora disponibles: {actividad.cupos}
+
+          Este es un mensaje automático, por favor no responder.
+          """
+
+          # Contenido en HTML
+          html_content = f"""
+          <html>
+               <body>
+                    <h2>Cancelación de Inscripción</h2>
+                    <p>Estimado/a {perfil.nombre},</p>
+                    <p>Tu inscripción en la actividad <strong>{actividad.nombre}</strong> ha sido cancelada.</p>
+                    <p><strong>Fecha:</strong> {actividad.fecha_inicio}</p>
+                    <p><strong>Hora inicio:</strong> {actividad.horario_inicio}</p>
+                    <p><strong>Hora término:</strong> {actividad.horario_termino}</p>
+                    <p><strong>Cupos ahora disponibles:</strong> {actividad.cupos}</p>
+                    <p>Este es un mensaje automático, por favor no responder.</p>
+               </body>
+          </html>
+          """
+
+          # Enviar el correo
+          subject = f"Cancelación de inscripción a la actividad: {actividad.nombre}"
+          email = EmailMultiAlternatives(
+               subject=subject,
+               body=text_content,
+               from_email=settings.DEFAULT_FROM_EMAIL,
+               to=[perfil.correo_electronico]  # Correo del perfil inscrito
+          )
+          email.attach_alternative(html_content, "text/html")
+          email.send()
+
           
 
 
