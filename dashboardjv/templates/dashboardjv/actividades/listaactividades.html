@@ -37,13 +37,11 @@
                         <table id="logsActividades" class="table table-hover table-striped">
                             <thead>
                                 <tr>
-                                    <th scope="col">#</th>
                                     <th scope="col">Titulo</th>
                                     <th scope="col">Fecha</th>
                                     <th scope="col">Hora Inicio</th>
                                     <th scope="col">Hora Término</th>
                                     <th scope="col">Cupos Totales</th>
-                                    <th scope="col">Cupos Tomados</th>
                                     <th scope="col">Estado.</th>
                                     <th scope="col">Acción</th>
                                 </tr>
@@ -51,35 +49,38 @@
                             <tbody>
                             {% for actividad in actividades %}
                                 <tr>
-                                    <td>{{ forloop.counter }}</td>
                                     <td>{{ actividad.nombre }}</td>
                                     <td>{{ actividad.fecha_inicio|date:"d/m/Y" }}</td>
                                     <td>{{ actividad.horario_inicio|date:"h:i A" }}</td>
                                     <td>{{ actividad.horario_termino|date:"h:i A" }}</td>
-                                    <td>{{ actividad.cupos }}</td>
-                                    <td>{{ actividad.cupos_tomados }}</td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ actividad.cupos_tomados }}</span> /
+                                        <span class="badge bg-success">{{ actividad.cupos }}</span>
+                                    </td>
                                     <td>
                                         {% if actividad.id_estadoactividad.descripcion == 'habilitada' %}
                                             <span class="badge text-bg-success">habilitada</span>
-                                        {% elif actividad.id_estadoactividad.descripcion == 'habilitada' %}
-                                            <span class="badge text-bg-warning">inhabilitada</span>
+                                        {% elif actividad.id_estadoactividad.descripcion == 'inhabilitada' %}
+                                            <span class="badge text-bg-danger">inhabilitada</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <!-- Botón principal que despliega el dropdown -->
+                                        {% if actividad.id_estadoactividad.descripcion == 'habilitada' %}
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <!-- Botón principal que despliega el dropdown -->
                                                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            Acciones
+                                                    Acciones
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li>
                                                         <!-- Opción para editar -->
-                                                        <a class="dropdown-item edit-junta" href="#"> 
+                                                        <a class="dropdown-item edit-junta" href="{% url "dashboardjv:editaractividad" actividad.id_actividad %}"> 
                                                             <i class="ri-edit-2-line"></i> Editar Actividad
                                                         </a>
                                                     </li>
                                                 </ul>
-                                        </div>
+                                            </div>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

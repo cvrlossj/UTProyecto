@@ -57,15 +57,16 @@
                                     <td>
                                         {% if actividad.id_estadoactividad.descripcion == 'habilitada' %}
                                             <span class="badge text-bg-success">habilitada</span>
-                                        {% elif actividad.id_estadoactividad.descripcion == 'habilitada' %}
-                                            <span class="badge text-bg-warning">inhabilitada</span>
+                                        {% elif actividad.id_estadoactividad.descripcion == 'inhabilitada' %}
+                                            <span class="badge text-bg-danger">inhabilitada</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <!-- Botón principal que despliega el dropdown -->
+                                        {% if actividad.id_estadoactividad.descripcion == 'habilitada' %}
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <!-- Botón principal que despliega el dropdown -->
                                                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            Acciones
+                                                    Acciones
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li>
@@ -75,7 +76,8 @@
                                                         </a>
                                                     </li>
                                                 </ul>
-                                        </div>
+                                            </div>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

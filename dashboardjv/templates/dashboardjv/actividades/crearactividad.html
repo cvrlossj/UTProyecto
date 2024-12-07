@@ -19,13 +19,13 @@
         }
     </style>
     <div class="container">
-        {% if messages %}
-            <div class="alert alert-danger" role="alert">
-                {% for message in messages %}
+        <div class="container">
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" role="alert">
                     {{ message }}
-                {% endfor %}
-            </div>
-        {% endif %}
+                </div>
+            {% endfor %}
+        </div>
     </div> 
     <div class="container">
         <div class="col-md-12">
@@ -91,7 +91,7 @@
                         </div>
 
                         <div class="form-group d-flex justify-content-start">
-                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardjv:listanoticias" %}">Cancelar</a>
+                            <a type="button" class="btn btn-secondary me-2" href="{% url "dashboardjv:listaactividades" %}">Cancelar</a>
                             <button type="submit" class="btn btn-success">Crear Actividad</button>
                         </div>
                         

@@ -1219,7 +1219,7 @@ class CrearActividad(View):
             'user': user,
             'junta': junta,
             'actividades': actividades,
-            'total_miembros': total_miembros
+            'total_miembros': total_miembros,
         }
         return render(request, 'dashboardjv/actividades/crearactividad.html', context)
     
@@ -1337,7 +1337,170 @@ class CrearActividad(View):
                 'junta': junta,
             }
             return render(request, 'dashboardjv/actividades/crearactividad.html', context)
-        
+
+
+
+@method_decorator([login_required, role_required(2)], name='dispatch')
+class EditarActividad(View):
+    def get(self, request, id_actividad, *args, **kwargs):
+        actividad = get_object_or_404(Actividad, id_actividad=id_actividad)
+        junta = actividad.id_juntavecinos
+        total_miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+        estados_actividad = EstadoActividad.objects.all()
+
+        context = {
+            'actividad': actividad,
+            'total_miembros': total_miembros,
+            'estados_actividad': estados_actividad
+        }
+
+        return render(request, 'dashboardjv/actividades/editaractividad.html', context)
+    
+    
+    from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.contrib import messages
+
+@method_decorator([login_required, role_required(2)], name='dispatch')
+class EditarActividad(View):
+    def get(self, request, id_actividad, *args, **kwargs):
+        actividad = get_object_or_404(Actividad, id_actividad=id_actividad)
+        junta = actividad.id_juntavecinos
+        total_miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1).count()
+        estados_actividad = EstadoActividad.objects.all()
+
+        context = {
+            'actividad': actividad,
+            'total_miembros': total_miembros,
+            'estados_actividad': estados_actividad
+        }
+
+        return render(request, 'dashboardjv/actividades/editaractividad.html', context)
+
+    def post(self, request, id_actividad, *args, **kwargs):
+        actividad = get_object_or_404(Actividad, id_actividad=id_actividad)
+        old_cupos = actividad.cupos
+        old_estado = actividad.id_estadoactividad.descripcion
+        form_data = request.POST
+        new_cupos = int(form_data.get('cupos'))
+        nuevo_estado = form_data.get('estado_actividad')
+
+        # Validación para solo aumentar los cupos
+        if new_cupos < old_cupos:
+            messages.error(request, "No se pueden disminuir los cupos. Solo puedes aumentarlos.")
+            return HttpResponseRedirect(request.path_info)
+
+        # Actualizar la actividad
+        actividad.nombre = form_data.get('titulo')
+        actividad.fecha_inicio = form_data.get('fecha_inc')
+        actividad.horario_inicio = form_data.get('hora_inc')
+        actividad.horario_termino = form_data.get('hora_ter')
+        actividad.cupos = new_cupos
+        actividad.descripcion = form_data.get('descripcion')
+        actividad.id_estadoactividad = EstadoActividad.objects.get(id_estadoactividad=nuevo_estado)
+
+        # Si el estado es inhabilitar, borrar inscripciones y poner los cupos a 0
+        if nuevo_estado == 'inhabilitada':
+            # Eliminar todas las inscripciones
+            inscritos = InscripcionActividad.objects.filter(id_actividad=actividad)
+            self.enviar_correo_inhabilitacion(inscritos, actividad)  # Notificar a los inscritos
+            inscritos.delete()
+            actividad.cupos = 0
+
+        # Guardar los cambios
+        actividad.save()
+
+        # Enviar correo a todos los miembros de la junta si hubo una modificación en cupos o estado
+        if old_cupos != new_cupos or old_estado != 'inhabilitada':
+            self.enviar_correo_modificacion(actividad)
+
+        messages.success(request, "La actividad se ha actualizado exitosamente.")
+        return HttpResponseRedirect(request.path_info)
+
+    def enviar_correo_modificacion(self, actividad):
+        # Obtener los correos de todos los miembros de la junta
+        junta = actividad.id_juntavecinos
+        miembros = junta.perfiles.filter(id_rol=3, id_estadoperfil=1)
+        correos = [miembro.correo_electronico for miembro in miembros if miembro.correo_electronico]
+
+        # Crear el contenido del correo
+        subject = f"Actividad Modificada: {actividad.nombre}"
+        text_content = f"""
+        Estimado vecino,
+
+        La actividad '{actividad.nombre}' ha sido modificada. Los detalles son los siguientes:
+
+        Fecha de inicio: {actividad.fecha_inicio}
+        Hora de inicio: {actividad.horario_inicio}
+        Hora de término: {actividad.horario_termino}
+        Cupos disponibles: {actividad.cupos}
+        Descripción: {actividad.descripcion}
+
+        Junta de Vecinos: {junta.nombre_organizacion}
+        """
+        html_content = f"""
+        <html>
+            <body>
+                <h2>Actividad Modificada: {actividad.nombre}</h2>
+                <p>Estimado vecino,</p>
+                <p>La actividad <strong>{actividad.nombre}</strong> ha sido modificada. Los detalles son los siguientes:</p>
+                <ul>
+                    <li><strong>Fecha de inicio:</strong> {actividad.fecha_inicio}</li>
+                    <li><strong>Hora de inicio:</strong> {actividad.horario_inicio}</li>
+                    <li><strong>Hora de término:</strong> {actividad.horario_termino}</li>
+                    <li><strong>Cupos disponibles:</strong> {actividad.cupos}</li>
+                </ul>
+                <p><strong>Descripción:</strong> {actividad.descripcion}</p>
+                <p>Junta de Vecinos: {junta.nombre_organizacion}</p>
+            </body>
+        </html>
+        """
+
+        # Enviar correos
+        for correo in correos:
+            email = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [correo])
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+
+    def enviar_correo_inhabilitacion(self, inscritos, actividad):
+        # Crear el contenido del correo para los vecinos inscritos
+        subject = f"Actividad Inhabilitada: {actividad.nombre}"
+        text_content = f"""
+        Estimado vecino,
+
+        La actividad '{actividad.nombre}' ha sido inhabilitada y ya no está disponible.
+
+        Fecha de inicio: {actividad.fecha_inicio}
+        Hora de inicio: {actividad.horario_inicio}
+        Hora de término: {actividad.horario_termino}
+
+        Gracias por su comprensión.
+        """
+        html_content = f"""
+        <html>
+            <body>
+                <h2>Actividad Inhabilitada: {actividad.nombre}</h2>
+                <p>Estimado vecino,</p>
+                <p>La actividad <strong>{actividad.nombre}</strong> ha sido inhabilitada y ya no está disponible.</p>
+                <ul>
+                    <li><strong>Fecha de inicio:</strong> {actividad.fecha_inicio}</li>
+                    <li><strong>Hora de inicio:</strong> {actividad.horario_inicio}</li>
+                    <li><strong>Hora de término:</strong> {actividad.horario_termino}</li>
+                </ul>
+                <p>Gracias por su comprensión.</p>
+            </body>
+        </html>
+        """
+
+        # Enviar correos a los inscritos
+        for inscripcion in inscritos:
+            correo = inscripcion.id_perfil.correo_electronico
+            if correo:
+                email = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [correo])
+                email.attach_alternative(html_content, "text/html")
+                email.send()
+
 
 #! ---- [Dashboard Junta de Vecinos] ----
 @method_decorator([login_required, role_required(2)], name='dispatch')
